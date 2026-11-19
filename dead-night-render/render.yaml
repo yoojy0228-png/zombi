@@ -1,6 +1,0 @@
-services:
-  - type: web
-    runtime: static
-    name: dead-night
-    buildCommand: echo "static site - no build step"
-    staticPublishPath: public
