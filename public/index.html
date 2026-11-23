@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta name="google-site-verification" content="2W02LIAFWzXI_fezbYsvlXhF7cu5UjoVRaSIldJ4aUs" />
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1071,7 +1070,7 @@ function animModelEnemy(e, dt, moving, sp, attacking){
 // 안 보이는 좀비는 6프레임에 한 번, 18m 밖은 2프레임에 한 번 애니메이션 계산 (밀린 시간은 합쳐서 반영)
 function mixStep(e, dt){
   e.mixAcc = (e.mixAcc || 0) + dt; e.mixN = ((e.mixN || 0) + 1);
-  const every = !e.g.visible ? 6 : e.camD > 18 ? 2 : 1;
+  const every = !e.g.visible ? 6 : (e.camD > 18 && G.state === 'playing') ? 2 : 1;
   if (e.mixN >= every){ e.mixN = 0; e.mixer.update(Math.min(e.mixAcc, 0.25)); e.mixAcc = 0; }
 }
 // 화면에 안 잡히는 좀비는 그리지 않음: 안개 밖, 카메라 뒤, (플레이 중) 벽 너머
@@ -1506,10 +1505,27 @@ function blocked(cx, cy, cz, tx, ty, tz){
   return false;
 }
 function camLift(c){
-  let lift = 0;
-  while (lift < 30 && blocked(c[0], c[1] + lift, c[2], c[3], c[4], c[5])) lift += 0.5;
-  return lift;
+  if (!blocked(c[0], c[1], c[2], c[3], c[4], c[5])) return 0;
+  let lo = 0, hi = 0.5;
+  while (hi < 30 && blocked(c[0], c[1] + hi, c[2], c[3], c[4], c[5])){ lo = hi; hi += 0.5; }
+  for (let i=0; i<5; i++){ const m = (lo + hi)/2; if (blocked(c[0], c[1] + m, c[2], c[3], c[4], c[5])) lo = m; else hi = m; }
+  return hi + 0.15;
 }
+// 샷이 시작될 때 전체 경로의 '필요한 높이'를 미리 계산해 부드러운 곡선으로 만든다
+// (앞으로 필요한 높이를 미리 반영 → 벽에 가리기 전에 천천히 올라가고, 프레임마다 튀지 않음)
+const LIFT_N = 160;
+function liftProfile(sh){
+  const need = new Float32Array(LIFT_N + 1);
+  for (let i=0; i<=LIFT_N; i++) need[i] = camLift(sh.cam(ease(i/LIFT_N), 0));
+  const W = 16; let a = new Float32Array(LIFT_N + 1);
+  for (let i=0; i<=LIFT_N; i++){ let m = 0; for (let j=Math.max(0, i-W); j<=Math.min(LIFT_N, i+W); j++) m = Math.max(m, need[j]); a[i] = m; }
+  for (let pass=0; pass<4; pass++){ const b = new Float32Array(LIFT_N + 1);
+    for (let i=0; i<=LIFT_N; i++){ let sum = 0, wt = 0; for (let j=-8; j<=8; j++){ const q = Math.min(LIFT_N, Math.max(0, i+j)), w = 9 - Math.abs(j); sum += a[q]*w; wt += w; } b[i] = sum/wt; }
+    a = b; }
+  for (let i=0; i<=LIFT_N; i++) a[i] = Math.max(a[i], need[Math.max(0, i-1)], need[i], need[Math.min(LIFT_N, i+1)]); for (let i=0; i<=LIFT_N; i++) a[i] += Math.min(0.12, a[i]*0.5);
+  return a;
+}
+function liftAt(sh, u){ const f = u*LIFT_N, i = Math.min(LIFT_N - 1, Math.floor(f)), t = f - i; return sh.lift[i]*(1 - t) + sh.lift[i+1]*t; }
 function povLook(d){ return [P.x - Math.sin(P.yaw)*d, EYE, P.z - Math.cos(P.yaw)*d]; }
 function cut(shots, end){
   G.state = 'cutscene'; firing = false; aiming = false; show(null); $('hud').classList.remove('on');
@@ -1522,6 +1538,7 @@ function cut(shots, end){
   shotStart(shots[0]);
 }
 function shotStart(sh){
+  if (!sh.free && !sh.lift) sh.lift = liftProfile(sh);
   cine.txt = sh.txt || ''; cine.n = 0; cineTxt.textContent = ''; cineWho.textContent = sh.who || '';
   if (sh.ttl){ cineTtl.innerHTML = sh.ttl; cineTtl.classList.add('show'); cine.ttlT = sh.d - 0.4; }
   if (sh.who) sfx.radio();
@@ -1531,7 +1548,7 @@ function updateCine(dt){
   const sh = cine.shots[cine.i]; if (!sh) return;
   cine.t += dt; const u = Math.min(1, cine.t / sh.d), k = ease(u);
   const c = sh.cam(k, cine.t);
-  if (!sh.free){ const need = camLift(c); cine.lift = cine.t <= dt*1.01 ? need : need > cine.lift ? need : Math.max(need, cine.lift - dt*3); c[1] += cine.lift; }
+  if (!sh.free && sh.lift) c[1] += liftAt(sh, u);
   camera.position.set(c[0], c[1], c[2]); cl.set(c[3], c[4], c[5]); camera.lookAt(cl);
   scene.fog.density = sh.fog !== undefined ? sh.fog : FOG_D;
   if (sh.tick) sh.tick(dt, k);
@@ -1564,7 +1581,7 @@ function goalShot(d, ttl, txt, who, a0){
     return [gx + Math.sin(a)*7, mix(8, 6, k), gz + Math.cos(a)*7, gx, 1.2, gz]; } };
 }
 function openingCut(){
-  const c = L.n*CS/2, z0 = enemies.find(e => !e.dead) || null; cine.lift = 0;
+  const c = L.n*CS/2, z0 = enemies.find(e => !e.dead) || null;
   const shots = [
     { d:5.2, fog:0.012, free:true, ttl:'망자의 <em style="font-style:normal;color:var(--blood)">밤</em><small>해림 격리구역</small>',
       txt:'11월의 밤, 해안 도시 해림. 감염이 퍼진 지 사흘 만에 군은 도시 전체를 장벽으로 봉쇄했다.',
