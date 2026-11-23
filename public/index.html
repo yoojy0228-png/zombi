@@ -109,6 +109,14 @@
   .btns { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
   .btn.alt { background:rgba(233,228,212,.1); box-shadow:0 6px 0 rgba(0,0,0,.45); border:1px solid rgba(233,228,212,.28); }
   .btn.sm { font-size:18px; padding:10px 28px; }
+  .diff { display:flex; gap:0; justify-content:center; align-items:center; margin-top:22px; }
+  .diff span { font-size:12px; letter-spacing:.2em; opacity:.65; margin-right:12px; }
+  .diff button { font-family:"Black Han Sans",system-ui,sans-serif; font-size:17px; padding:8px 20px; color:var(--bone); background:rgba(233,228,212,.06);
+    border:1px solid rgba(233,228,212,.25); cursor:pointer; margin-left:-1px; }
+  .diff button:first-of-type { border-radius:3px 0 0 3px; } .diff button:last-of-type { border-radius:0 3px 3px 0; }
+  .diff button.on { background:var(--blood); border-color:#ff5a72; box-shadow:0 0 18px rgba(200,16,46,.45); }
+  .diff-note { font-size:12px; opacity:.55; margin-top:8px; min-height:16px; }
+  .btns + .diff { margin-top:18px; }
   #vig { position:fixed; inset:0; pointer-events:none; opacity:0;
     background:radial-gradient(ellipse at center, rgba(200,16,46,0) 40%, rgba(200,16,46,.75) 100%); }
   #low { position:fixed; inset:0; pointer-events:none; opacity:0;
@@ -200,6 +208,7 @@
     .res div b { font-size:28px; }
     body.touch .touch-only { margin-top:10px; font-size:13px; line-height:1.55; }
     .story { font-size:13px; line-height:1.6; margin-top:8px; max-height:none; }
+    .diff { margin-top:10px; } .diff button { font-size:15px; padding:6px 16px; } .diff-note { margin-top:4px; }
     #cine .txt { font-size:14px; } #cine .cap { bottom:calc(11vh + 6px); }
   }
 </style>
@@ -265,6 +274,8 @@
       <button class="btn display" id="startBtn">스토리 모드</button>
       <button class="btn display alt" id="endlessBtn">무한 모드</button>
     </div>
+    <div class="diff" id="diffSel"><span>난이도</span><button type="button" data-d="easy">쉬움</button><button type="button" data-d="normal">중간</button><button type="button" data-d="hard">어려움</button></div>
+    <p class="diff-note" id="diffNote"></p>
     <p class="best" id="bestMenu"></p>
   </div>
 </div>
@@ -976,7 +987,7 @@ function makeProcEnemy(type, x, z, stageN){
   const sp = def.speed[0] + Math.random()*(def.speed[1]-def.speed[0]);
   const e = { type, def, g, meshes, mats:[skin, cloth, pants], legL:hips[0], legR:hips[1], kneeL:knees[0], kneeR:knees[1],
     armL:arms[0], armR:arms[1], upper, head, blob,
-    hp: def.hp * (1 + (stageN-1)*0.09), speed: sp * (1 + Math.min(Math.max(stageN-1, 0), 10)*0.008),
+    hp: def.hp * (1 + (stageN-1)*0.09) * D.hp, speed: sp * (1 + Math.min(Math.max(stageN-1, 0), 10)*0.008) * D.spd,
     phase: Math.random()*6, atk: 0.4, flash: 0, stagger: 0, dead:false, deadT:0,
     armBase: -1.25 + (Math.random()-.5)*0.4, armBaseR: -1.0 + (Math.random()-.5)*0.7,
     limp: Math.random() < 0.4 ? 0.45 + Math.random()*0.3 : 1, tilt: (Math.random()-.5)*0.5 };
@@ -1041,7 +1052,7 @@ function makeModelEnemy(type, x, z, stageN){
   mixer.update(0);
   const sp = def.speed[0] + Math.random()*(def.speed[1]-def.speed[0]);
   const e = { type, def, g, meshes, mats, xm, skels, blob, model:true, mixer, walk, atkA, atkW:0,
-    hp: def.hp * (1 + (stageN-1)*0.09), speed: sp * (1 + Math.min(Math.max(stageN-1, 0), 10)*0.008),
+    hp: def.hp * (1 + (stageN-1)*0.09) * D.hp, speed: sp * (1 + Math.min(Math.max(stageN-1, 0), 10)*0.008) * D.spd,
     phase:0, atk:0.4, flash:0, stagger:0, dead:false, deadT:0 };
   for (const m of meshes) m.userData.enemy = e;
   if (type === 'gunner') armGunner(e);
@@ -1088,7 +1099,7 @@ function enemyFire(e){
   const spr = 0.03; dx = dx/l + (Math.random()-.5)*spr; dy = dy/l + (Math.random()-.5)*spr*0.5; dz = dz/l + (Math.random()-.5)*spr;
   const k = 1/Math.hypot(dx, dy, dz), SPD = 26;
   const b = bullets[bulletIdx]; bulletIdx = (bulletIdx+1) % bullets.length;
-  b.vx = dx*k*SPD; b.vy = dy*k*SPD; b.vz = dz*k*SPD; b.life = 2; b.dmg = Math.min(16, 9 + G.stage*0.5); b.sx = e.g.position.x; b.sz = e.g.position.z;
+  b.vx = dx*k*SPD; b.vy = dy*k*SPD; b.vz = dz*k*SPD; b.life = 2; b.dmg = Math.min(16, 9 + G.stage*0.5) * D.dmg; b.sx = e.g.position.x; b.sz = e.g.position.z;
   b.m.position.copy(mzP); b.m.lookAt(mzP.x + b.vx, mzP.y + b.vy, mzP.z + b.vz); b.m.visible = true;
   e.fl.visible = true; e.flT = 0.06;
   const dist = Math.hypot(P.x - e.g.position.x, P.z - e.g.position.z);
@@ -1178,20 +1189,34 @@ const FINAL = 10;
 const aim = { x:0, y:0 };
 const keys = {};
 let firing = false, fresh = false, aiming = false, scoped = false, scopeShown = false, lockMode = false, fallback = false, touchMode = false;
+const DIFFS = {
+  easy:   { name:'쉬움',   spd:0.85, hp:0.8,  dmg:0.6,  cnt:0.7, int:1.3,  drop:1.6, aim:1.05, note:'좀비가 느리고 약하며 수가 적습니다. 아이템이 자주 나옵니다.' },
+  normal: { name:'중간',   spd:1,    hp:1,    dmg:1,    cnt:1,   int:1,    drop:1,   aim:0.8,  note:'기본 난이도입니다.' },
+  hard:   { name:'어려움', spd:1.12, hp:1.25, dmg:1.4,  cnt:1.3, int:0.8,  drop:0.6, aim:0.62, note:'좀비가 빠르고 단단하며 수가 많습니다. 총 든 좀비가 더 빨리 쏩니다.' }
+};
+let diff = 'normal'; try { const d = localStorage.getItem('deadnight_diff'); if (DIFFS[d]) diff = d; } catch(e){}
+let D = DIFFS[diff];
 let best = 0, bestStory = 0, cleared = false;
-try { best = parseInt(localStorage.getItem('deadnight_best') || '0', 10) || 0; bestStory = parseInt(localStorage.getItem('deadnight_story_best') || '0', 10) || 0; cleared = localStorage.getItem('deadnight_cleared') === '1'; } catch(e){}
+function loadBest(){ const x = diff === 'normal' ? '' : '_' + diff; best = 0; bestStory = 0; cleared = false;
+  try { best = parseInt(localStorage.getItem('deadnight_best' + x) || '0', 10) || 0; bestStory = parseInt(localStorage.getItem('deadnight_story_best' + x) || '0', 10) || 0; cleared = localStorage.getItem('deadnight_cleared' + x) === '1'; } catch(e){} }
+loadBest();
+function setDiff(d){ if (!DIFFS[d]) return; diff = d; D = DIFFS[d]; try { localStorage.setItem('deadnight_diff', d); } catch(e){}
+  for (const b of document.querySelectorAll('#diffSel button')) b.classList.toggle('on', b.dataset.d === d);
+  $('diffNote').textContent = D.note; loadBest(); showBest(); }
 function showBest(){
   const a = [];
+  a.push('난이도 ' + D.name);
   if (bestStory > 0) a.push('스토리 최고 ' + bestStory.toLocaleString() + (cleared ? ' · 탈출 성공 ✓' : ''));
   if (best > 0) a.push('무한 모드 최고 ' + best.toLocaleString());
   $('bestMenu').textContent = a.join('   |   ');
   const m = G.mode === 'endless' ? best : bestStory;
-  $('bestOver').textContent = m > 0 ? (G.mode === 'endless' ? '무한 모드 최고 점수 ' : '스토리 최고 점수 ') + m.toLocaleString() : '';
-  $('bestWin').textContent = bestStory > 0 ? '스토리 최고 점수 ' + bestStory.toLocaleString() : '';
+  $('bestOver').textContent = '난이도 ' + D.name + (m > 0 ? '  ·  ' + (G.mode === 'endless' ? '무한 모드 최고 점수 ' : '스토리 최고 점수 ') + m.toLocaleString() : '');
+  $('bestWin').textContent = '난이도 ' + D.name + (bestStory > 0 ? '  ·  스토리 최고 점수 ' + bestStory.toLocaleString() : '');
 }
 function saveBest(){
-  if (G.mode === 'endless'){ if (G.score > best){ best = G.score; try { localStorage.setItem('deadnight_best', String(best)); } catch(e){} } }
-  else if (G.score > bestStory){ bestStory = G.score; try { localStorage.setItem('deadnight_story_best', String(bestStory)); } catch(e){} }
+  const x = diff === 'normal' ? '' : '_' + diff;
+  if (G.mode === 'endless'){ if (G.score > best){ best = G.score; try { localStorage.setItem('deadnight_best' + x, String(best)); } catch(e){} } }
+  else if (G.score > bestStory){ bestStory = G.score; try { localStorage.setItem('deadnight_story_best' + x, String(bestStory)); } catch(e){} }
 }
 showBest();
 
@@ -1258,7 +1283,7 @@ function startStage(s, quiet){
   for (const a of DIRS){ if (solid(1+a[0], 1+a[1])) continue; const v = gd[(1+a[1])*L.n + 1+a[0]]; if (v >= 0 && v < bd){ bd = v; fx = a[0]; fz = a[1]; } }
   P.yaw = Math.atan2(-fx, -fz);
   updateField();
-  const pre = Math.min(COARSE ? 18 : 30, s <= 6 ? [3,6,9,14,20,26][s-1] : 6 + s*4);
+  const pre = Math.max(2, Math.round(Math.min(COARSE ? 18 : 30, s <= 6 ? [3,6,9,14,20,26][s-1] : 6 + s*4) * D.cnt));
   for (let i=0; i<pre; i++){ const c = pickCell(4, 999); if (c) spawnAt(randType(s), c); }
   const story = G.mode === 'story', fin = story && s === FINAL;
   if (s >= 2) for (let i=0; i<(fin ? 3 : s >= 5 ? 2 : 1); i++) spawnAt('brute', { x:L.goal.x, z:L.goal.z });
@@ -1379,7 +1404,7 @@ function damage(e, head, point, base){
     const pts = $('pts'); pts.textContent = '+' + Math.round(e.def.score * (head ? 1.5 : 1)) + (head ? ' 헤드샷' : '');
     pts.className = 'display' + (head ? ' head' : ''); void pts.offsetWidth; pts.classList.add('go');
     const x = e.g.position.x, z = e.g.position.z, brute = e.type === 'brute';
-    const ammoCh = brute ? 0.4 : 0.05 + (totalAmmo() < 40 ? 0.05 : 0), medCh = brute ? 0.15 : 0.015 + (P.hp < 40 ? 0.02 : 0), spdCh = brute ? 0.12 : 0.015;
+    const ammoCh = Math.min(0.9, (brute ? 0.4 : 0.05 + (totalAmmo() < 40 ? 0.05 : 0)) * D.drop), medCh = (brute ? 0.15 : 0.015 + (P.hp < 40 ? 0.02 : 0)) * D.drop, spdCh = (brute ? 0.12 : 0.015) * D.drop;
     if (brute){ if (Math.random() < ammoCh) dropItem('ammo', x, z); if (Math.random() < medCh) dropItem('med', x + 0.8, z + 0.3); if (Math.random() < spdCh) dropItem('speed', x - 0.8, z - 0.3); }
     else { const r = Math.random();
       if (r < ammoCh) dropItem('ammo', x, z); else if (r < ammoCh + medCh) dropItem('med', x, z); else if (r < ammoCh + medCh + spdCh) dropItem('speed', x, z); }
@@ -1434,6 +1459,21 @@ const cine = { shots:[], i:0, t:0, end:null, txt:'', n:0, ttlT:0 };
 const FOG_D = scene.fog.density, cv = new THREE.Vector3(), cl = new THREE.Vector3();
 const ease = u => u < 0 ? 0 : u > 1 ? 1 : u*u*(3 - 2*u);
 const mix = (a, b, k) => a + (b - a)*k;
+// 카메라와 바라보는 지점 사이에 벽이 있으면 벽이 안 가릴 때까지 카메라를 올린다
+function wallAt(x, y, z){ return y < WALL_H + 0.25 && solid(Math.floor(x/CS), Math.floor(z/CS)); }
+function blocked(cx, cy, cz, tx, ty, tz){
+  const dx = cx - tx, dy = cy - ty, dz = cz - tz, n = Math.max(4, Math.ceil(Math.hypot(dx, dy, dz)/0.3));
+  for (let i=1; i<=n; i++){ const t = i/n; if (t < 0.04) continue;
+    // 카메라 주변 0.35m(근접 평면)까지 포함해 검사
+    if (wallAt(tx + dx*t, ty + dy*t, tz + dz*t)) return true; }
+  for (const o of [[0.35,0],[-0.35,0],[0,0.35],[0,-0.35]]) if (wallAt(cx + o[0], cy, cz + o[1])) return true;
+  return false;
+}
+function camLift(c){
+  let lift = 0;
+  while (lift < 30 && blocked(c[0], c[1] + lift, c[2], c[3], c[4], c[5])) lift += 0.5;
+  return lift;
+}
 function povLook(d){ return [P.x - Math.sin(P.yaw)*d, EYE, P.z - Math.cos(P.yaw)*d]; }
 function cut(shots, end){
   G.state = 'cutscene'; firing = false; aiming = false; show(null); $('hud').classList.remove('on');
@@ -1454,7 +1494,9 @@ function shotStart(sh){
 function updateCine(dt){
   const sh = cine.shots[cine.i]; if (!sh) return;
   cine.t += dt; const u = Math.min(1, cine.t / sh.d), k = ease(u);
-  const c = sh.cam(k, cine.t); camera.position.set(c[0], c[1], c[2]); cl.set(c[3], c[4], c[5]); camera.lookAt(cl);
+  const c = sh.cam(k, cine.t);
+  if (!sh.free){ const need = camLift(c); cine.lift = cine.t <= dt*1.01 ? need : need > cine.lift ? need : Math.max(need, cine.lift - dt*3); c[1] += cine.lift; }
+  camera.position.set(c[0], c[1], c[2]); cl.set(c[3], c[4], c[5]); camera.lookAt(cl);
   scene.fog.density = sh.fog !== undefined ? sh.fog : FOG_D;
   if (sh.tick) sh.tick(dt, k);
   if (cine.n < cine.txt.length){ cine.n = Math.min(cine.txt.length, cine.n + dt*34); cineTxt.textContent = cine.txt.slice(0, Math.floor(cine.n)); }
@@ -1477,7 +1519,7 @@ function toPlay(s){ last = performance.now(); play(); announce(s); if (s === 1) 
 // 마지막 샷: 위에서 플레이어 눈높이로 내려앉기
 function descendShot(d, txt, who){
   const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw);
-  return { d, txt, who, cam:k => { const lk = povLook(6);
+  return { d, txt, who, free:true, cam:k => { const lk = povLook(6);
     return [P.x - fx*1.2*(1-k), mix(11, EYE, k), P.z - fz*1.2*(1-k), mix(P.x + fx*2, lk[0], k), mix(0, lk[1], k), mix(P.z + fz*2, lk[2], k)]; } };
 }
 function goalShot(d, ttl, txt, who, a0){
@@ -1486,9 +1528,9 @@ function goalShot(d, ttl, txt, who, a0){
     return [gx + Math.sin(a)*7, mix(8, 6, k), gz + Math.cos(a)*7, gx, 1.2, gz]; } };
 }
 function openingCut(){
-  const c = L.n*CS/2, z0 = enemies.find(e => !e.dead) || null;
+  const c = L.n*CS/2, z0 = enemies.find(e => !e.dead) || null; cine.lift = 0;
   const shots = [
-    { d:5.2, fog:0.012, ttl:'망자의 <em style="font-style:normal;color:var(--blood)">밤</em><small>해림 격리구역</small>',
+    { d:5.2, fog:0.012, free:true, ttl:'망자의 <em style="font-style:normal;color:var(--blood)">밤</em><small>해림 격리구역</small>',
       txt:'11월의 밤, 해안 도시 해림. 감염이 퍼진 지 사흘 만에 군은 도시 전체를 장벽으로 봉쇄했다.',
       cam:k => { const a = 0.6 + k*0.5; return [c + Math.sin(a)*c*1.1, mix(44, 34, k), c + Math.cos(a)*c*1.1, c, 0, c]; } },
     { d:4.4, fog:0.02, txt:'골목과 장벽이 뒤엉킨 격리구역은 이제 하나의 거대한 미로다. 그리고 그 안엔 죽은 자들이 걷는다.',
@@ -1565,11 +1607,11 @@ function endingCut(){
     { d:4.0, txt:'사다리가 내려온다. 손을 뻗었다.',
       cam:k => [mix(P.x, gx - 0.6, k), mix(EYE, 6.3, k), mix(P.z, gz - 0.4, k), gx + Math.sin(yaw0)*1.2, mix(7.6, 6.6, k), gz + Math.cos(yaw0)*1.2],
       tick:dt => heliAt(gx, 7.5, gz, yaw0, dt) },
-    { d:6.0, fog:0.009, txt:'헬기가 장벽 위로 떠오른다. 아래로는 불 꺼진 도시가 끝없는 미로처럼 펼쳐져 있다.',
+    { d:6.0, fog:0.009, free:true, txt:'헬기가 장벽 위로 떠오른다. 아래로는 불 꺼진 도시가 끝없는 미로처럼 펼쳐져 있다.',
       cam:k => { const hx = mix(gx, gx - 30, k*k), hz = mix(gz, gz - 22, k*k), hy = mix(7.5, 34, k);
         return [hx + 2.5, hy - 1.2, hz + 2.5, hx + mix(6, 14, k), 0, hz + mix(6, 14, k)]; },
       tick:(dt, k) => heliAt(mix(gx, gx - 30, k*k), mix(7.5, 34, k), mix(gz, gz - 22, k*k), yaw0 + k*0.6, dt) },
-    { d:4.2, fog:0.008, who:'📻 윤 중사', txt:'살아 나왔군. 열 개의 봉쇄선을 혼자 뚫은 건 당신이 처음이야.',
+    { d:4.2, fog:0.008, free:true, who:'📻 윤 중사', txt:'살아 나왔군. 열 개의 봉쇄선을 혼자 뚫은 건 당신이 처음이야.',
       cam:k => { const c = L.n*CS/2; return [gx - 30 + Math.sin(k)*6, mix(40, 52, k), gz - 22, c, 0, c]; },
       tick:(dt, k) => heliAt(gx - 30 - k*18, 36 + k*6, gz - 22 - k*12, yaw0 + 0.6, dt) }
   ];
@@ -1580,7 +1622,7 @@ function fmtTime(t){ t = Math.round(t); return Math.floor(t/60) + ':' + String(t
 function victory(){
   G.state = 'win'; firing = false; aiming = false; scene.fog.density = FOG_D;
   if (document.pointerLockElement === canvas) document.exitPointerLock();
-  saveBest(); cleared = true; try { localStorage.setItem('deadnight_cleared', '1'); } catch(e){}
+  saveBest(); cleared = true; try { localStorage.setItem('deadnight_cleared' + (diff === 'normal' ? '' : '_' + diff), '1'); } catch(e){}
   $('wScore').textContent = G.score.toLocaleString(); $('wKills').textContent = G.kills; $('wTime').textContent = fmtTime(G.totalTime);
   for (const b of bullets){ b.life = 0; b.m.visible = false; }
   clearTimeout(radioTimer); radioEl.classList.remove('show');
@@ -1596,6 +1638,8 @@ function gameOver(){
   $('rScore').textContent = G.score.toLocaleString(); $('rWave').textContent = G.stage; $('rKills').textContent = G.kills;
   showBest(); show('over'); $('hud').classList.remove('on');
 }
+for (const b of document.querySelectorAll('#diffSel button')) b.addEventListener('click', () => setDiff(b.dataset.d));
+setDiff(diff);
 $('startBtn').addEventListener('click', () => start('story'));
 $('endlessBtn').addEventListener('click', () => start('endless'));
 $('againBtn').addEventListener('click', () => start(G.mode, true));
@@ -1776,8 +1820,8 @@ function update(dt){
   let alive = 0; for (const e of enemies) if (!e.dead) alive++;
   G.spawnT -= dt;
   if (G.spawnT <= 0){
-    if (alive < Math.min(COARSE ? 26 : 38, G.stage <= 6 ? [5,8,12,17,23,29][G.stage-1] : 9 + G.stage*4)){ const c = pickCell(6, 11) || pickCell(4, 999); if (c) spawnAt(randType(G.stage), c); }
-    G.spawnT = Math.max(0.7, G.stage <= 4 ? 4.6 - G.stage*0.6 : 3.0 - G.stage*0.3) * (0.7 + Math.random()*0.6);
+    if (alive < Math.round(Math.min(COARSE ? 26 : 38, G.stage <= 6 ? [5,8,12,17,23,29][G.stage-1] : 9 + G.stage*4) * D.cnt)){ const c = pickCell(6, 11) || pickCell(4, 999); if (c) spawnAt(randType(G.stage), c); }
+    G.spawnT = Math.max(0.7, G.stage <= 4 ? 4.6 - G.stage*0.6 : 3.0 - G.stage*0.3) * D.int * (0.7 + Math.random()*0.6);
   }
   if (Math.hypot(P.x - L.goal.x, P.z - L.goal.z) < 1.7){ clearStage(); return; }
   ring.rotation.z += dt*1.5; ring.position.y = 0.3 + Math.sin(G.time*2)*0.15;
@@ -1815,14 +1859,14 @@ function update(dt){
       if (e.flT > 0){ e.flT -= dt; if (e.flT <= 0) e.fl.visible = false; }
       if (e.see && d > 3.2 && e.stagger <= 0){
         hold = true; mx = dx/d; mz = dz/d;
-        if (e.aimT <= 0 && e.cd <= 0){ e.aimT = 0.8; e.lock = null; sfx.aim(Math.max(0.2, 1 - d/30)); }
+        if (e.aimT <= 0 && e.cd <= 0){ e.aimT = e.aimD = D.aim; e.lock = null; sfx.aim(Math.max(0.2, 1 - d/30)); }
         if (e.aimT > 0){
           e.aimT -= dt;
           if (e.aimT < 0.18 && !e.lock) e.lock = { x:P.x, z:P.z };
           e.muzzle.getWorldPosition(mzP);
           const lx = e.lock ? e.lock.x : P.x, lz = e.lock ? e.lock.z : P.z;
           const pa = e.laser.geometry.attributes.position; pa.setXYZ(0, mzP.x, mzP.y, mzP.z); pa.setXYZ(1, lx, EYE - 0.35, lz); pa.needsUpdate = true;
-          e.laser.visible = true; e.laser.material.opacity = e.lock ? 0.95 : 0.25 + (1 - e.aimT/0.8)*0.5;
+          e.laser.visible = true; e.laser.material.opacity = e.lock ? 0.95 : 0.25 + (1 - e.aimT/e.aimD)*0.5;
           if (e.aimT <= 0){ e.laser.visible = false; enemyFire(e); e.cd = 1.5 + Math.random()*1.1; e.lock = null; }
         }
       } else { e.aimT = 0; e.lock = null; e.laser.visible = false; }
@@ -1846,7 +1890,7 @@ function update(dt){
     e.atk -= dt;
     if (d < reach){
       if (e.atk <= 0){ e.atk = e.type === 'runner' ? 0.7 : 1.0;
-        P.hp -= e.def.dmg; vig = 1; P.shake = 0.09; sfx.hurt(); dmgDir(g.position.x, g.position.z);
+        P.hp -= e.def.dmg * D.dmg; vig = 1; P.shake = 0.09; sfx.hurt(); dmgDir(g.position.x, g.position.z);
         if (P.hp <= 0){ P.hp = 0; refreshHud(); gameOver(); return; } }
       if (!e.model){ const sl = Math.max(0, e.atk) % 1; e.armL.rotation.x = e.armR.rotation.x = -1.75 + sl*0.9; }
     }
