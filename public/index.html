@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+<meta name="google-site-verification" content="2W02LIAFWzXI_fezbYsvlXhF7cu5UjoVRaSIldJ4aUs" />
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
@@ -126,6 +127,9 @@
   #grain { position:fixed; inset:-64px; pointer-events:none; opacity:.09; animation:grain .45s steps(5) infinite; }
   @keyframes grain { 0%{transform:translate(0,0)} 20%{transform:translate(-31px,17px)} 40%{transform:translate(23px,-41px)} 60%{transform:translate(-47px,-9px)} 80%{transform:translate(11px,37px)} 100%{transform:translate(0,0)} }
   @media (prefers-reduced-motion:reduce){ #grain { animation:none; } }
+  @media (pointer:coarse){ #grain { animation:none; } .panel, .tb { backdrop-filter:none; -webkit-backdrop-filter:none; } .panel { background:linear-gradient(180deg, rgba(14,19,26,.82), rgba(6,9,12,.76)); } .tb { background:rgba(8,12,16,.55); } }
+  body.touch #grain { animation:none; } body.touch .panel, body.touch .tb { backdrop-filter:none; -webkit-backdrop-filter:none; }
+  body.touch .panel { background:linear-gradient(180deg, rgba(14,19,26,.82), rgba(6,9,12,.76)); } body.touch .tb { background:rgba(8,12,16,.55); }
   #fade { position:fixed; inset:0; background:#000; opacity:0; pointer-events:none; }
   .overlay { position:fixed; inset:0; display:none; align-items:center; justify-content:center; text-align:center;
     background:radial-gradient(ellipse at 50% 30%, rgba(40,10,16,.72), rgba(4,6,9,.94)); padding:24px; }
@@ -357,9 +361,9 @@ if (typeof THREE === 'undefined') {
 
 /* ---------- 기본 세팅 ---------- */
 const canvas = $('game');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
 const COARSE = !!(window.matchMedia && window.matchMedia('(pointer:coarse)').matches);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, COARSE ? 1.5 : 2));
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:!COARSE, powerPreference:'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, COARSE ? 1.25 : 2));
 const SHADOWS = !COARSE;
 renderer.shadowMap.enabled = SHADOWS; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const FOG = 0x121a22;
@@ -574,7 +578,7 @@ const glowTex = new THREE.CanvasTexture(mkCanvas(128, (g, S) => {
   gr.addColorStop(0.45,'rgba(255,160,80,.12)'); gr.addColorStop(1,'rgba(255,140,60,0)'); g.fillStyle = gr; g.fillRect(0,0,S,S); }));
 const poleG = new THREE.CylinderGeometry(0.06, 0.09, 4.4, 10);
 const LAMP_LIGHTS = [];
-for (let i=0;i<(COARSE ? 2 : 3);i++){ const l = new THREE.PointLight(0xffc98a, 0, 13, 2); scene.add(l); LAMP_LIGHTS.push(l); }
+for (let i=0;i<(COARSE ? 1 : 3);i++){ const l = new THREE.PointLight(0xffc98a, 0, 13, 2); scene.add(l); LAMP_LIGHTS.push(l); }
 let lampGroup = null, lampT = 0;
 L.lamps = []; L.posts = [];
 function buildLamps(stage){
@@ -1062,8 +1066,35 @@ function animModelEnemy(e, dt, moving, sp, attacking){
   e.atkW += ((attacking ? 1 : 0) - e.atkW) * Math.min(1, dt*8);
   if (e.atkA){ e.atkA.setEffectiveWeight(e.atkW); e.walk.setEffectiveWeight(1 - e.atkW); }
   e.walk.timeScale = moving ? Math.max(0.6, Math.min(3.6, sp / (0.48*e.def.scale))) : 0.4;
-  e.mixer.update(dt);
+  mixStep(e, dt);
 }
+// 안 보이는 좀비는 6프레임에 한 번, 18m 밖은 2프레임에 한 번 애니메이션 계산 (밀린 시간은 합쳐서 반영)
+function mixStep(e, dt){
+  e.mixAcc = (e.mixAcc || 0) + dt; e.mixN = ((e.mixN || 0) + 1);
+  const every = !e.g.visible ? 6 : e.camD > 18 ? 2 : 1;
+  if (e.mixN >= every){ e.mixN = 0; e.mixer.update(Math.min(e.mixAcc, 0.25)); e.mixAcc = 0; }
+}
+// 화면에 안 잡히는 좀비는 그리지 않음: 안개 밖, 카메라 뒤, (플레이 중) 벽 너머
+const CULL_D = COARSE ? 36 : 44;
+function cullEnemies(dt, walls){
+  const cx = camera.position.x, cz = camera.position.z;
+  camera.getWorldDirection(cullF); const fl = Math.hypot(cullF.x, cullF.z) || 1, fx = cullF.x/fl, fz = cullF.z/fl;
+  cullT -= dt; const occ = walls && cullT <= 0; if (occ) cullT = 0.08;
+  for (const e of enemies){
+    const g = e.g, dx = g.position.x - cx, dz = g.position.z - cz, d = Math.hypot(dx, dz);
+    e.camD = d;
+    let vis = d < (walls ? CULL_D : 90);
+    if (vis && d > 3 && walls && (dx*fx + dz*fz) < -2.2) vis = false;
+    if (vis && walls && d > 6){
+      if (occ || e.occ === undefined){ const px = -dz/d*0.55, pz = dx/d*0.55;
+        e.occ = !los(cx, cz, g.position.x, g.position.z) && !los(cx, cz, g.position.x + px, g.position.z + pz) && !los(cx, cz, g.position.x - px, g.position.z - pz); }
+      if (e.occ) vis = false;
+    } else e.occ = false;
+    if (!walls) e.occ = undefined;
+    g.visible = vis;
+  }
+}
+const cullF = new THREE.Vector3(); let cullT = 0;
 /* ---------- 총 쏘는 좀비 ---------- */
 const gunBodyM = new THREE.MeshStandardMaterial({ color:0x1c1f22, roughness:0.5, metalness:0.7 });
 const gunWoodM = new THREE.MeshStandardMaterial({ color:0x4a3222, roughness:0.8, metalness:0 });
@@ -1236,15 +1267,19 @@ function toast(text, t){ hud.toast.textContent = text; hud.toast.classList.add('
 const radioEl = $('radio'); let radioT = 0, radioTimer = 0;
 function radio(msg, delay, t){ clearTimeout(radioTimer); radioEl.classList.remove('show'); radioT = 0;
   radioTimer = setTimeout(() => { $('radioMsg').textContent = msg; radioEl.classList.add('show'); radioT = t || 7; sfx.radio && sfx.radio(); }, (delay || 0)*1000); }
+const hpGhost = $('hpghost'), magFill = $('magfill');
+function setT(el, v){ v = String(v); if (el._t !== v){ el._t = v; el.textContent = v; } }
+function setW(el, v){ v = v.toFixed(1) + '%'; if (el._w !== v){ el._w = v; el.style.width = v; } }
 function refreshHud(){
-  hud.wave.textContent = G.mode === 'story' ? G.stage + '/' + FINAL : G.stage; hud.score.textContent = G.score.toLocaleString();
-  hud.left.textContent = G.kills;
-  hud.hpfill.style.width = Math.max(0, P.hp) + '%'; hud.hpnum.textContent = Math.max(0, Math.ceil(P.hp)); $('hpghost').style.width = Math.max(0, P.hp) + '%';
-  { const w = WEAPONS[P.w], f = $('magfill'); f.style.width = (w.melee ? 100 : 100*w.cur/w.mag) + '%'; f.classList.toggle('low', !w.melee && w.cur <= w.mag*0.25); }
+  setT(hud.wave, G.mode === 'story' ? G.stage + '/' + FINAL : G.stage);
+  if (hud.score._n !== G.score){ hud.score._n = G.score; hud.score.textContent = G.score.toLocaleString(); }
+  setT(hud.left, G.kills);
+  const hp = Math.max(0, P.hp); setW(hud.hpfill, hp); setT(hud.hpnum, Math.ceil(hp)); setW(hpGhost, hp);
+  { const w = WEAPONS[P.w]; setW(magFill, w.melee ? 100 : 100*w.cur/w.mag); const low = !w.melee && w.cur <= w.mag*0.25; if (magFill._l !== low){ magFill._l = low; magFill.classList.toggle('low', low); } }
   const w = WEAPONS[P.w];
-  hud.wname.textContent = w.name;
-  hud.mag.textContent = w.melee ? '∞' : w.cur; hud.res.textContent = w.melee ? '' : ' / ' + (isFinite(w.res) ? w.res : '∞');
-  hud.reload.textContent = w.melee ? '' : P.reloading > 0 ? '재장전 중…' : (w.cur === 0 && w.res === 0) ? '탄약 없음' : (w.cur <= w.mag*0.25 && w.res > 0) ? 'R 재장전' : '';
+  setT(hud.wname, w.name);
+  setT(hud.mag, w.melee ? '∞' : w.cur); setT(hud.res, w.melee ? '' : ' / ' + (isFinite(w.res) ? w.res : '∞'));
+  setT(hud.reload, w.melee ? '' : P.reloading > 0 ? '재장전 중…' : (w.cur === 0 && w.res === 0) ? '탄약 없음' : (w.cur <= w.mag*0.25 && w.res > 0) ? (touchMode ? '장전' : 'R 재장전') : '');
   let key = '' + P.w; for (const x of WEAPONS) key += x.melee ? '' : (x.cur + x.res > 0 ? '1' : '0');
   if (key !== wbarKey){ wbarKey = key;
     wbarBtns.forEach((b, i) => { const x = WEAPONS[i]; b.classList.toggle('on', i === P.w); b.classList.toggle('empty', !x.melee && x.cur + x.res === 0); }); }
@@ -1329,8 +1364,9 @@ function clearStage(){
 /* ---------- 사격 ---------- */
 const raycaster = new THREE.Raycaster(); raycaster.far = 120;
 const v2 = new THREE.Vector2(), tmpA = new THREE.Vector3(), tmpB = new THREE.Vector3();
+const tgtArr = [];
 function targets(withObstacles){
-  const t = []; for (const e of enemies) if (!e.dead) for (const m of e.meshes) t.push(m);
+  const t = tgtArr; t.length = 0; for (const e of enemies) if (!e.dead) for (const m of e.meshes) t.push(m);
   if (withObstacles && L.wallMesh) t.push(L.wallMesh); return t;
 }
 function equip(i){
@@ -1689,7 +1725,7 @@ window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; f
 const touch = { moveId:null, mox:0, moy:0, mx:0, my:0, sprint:false, lookId:null, lx:0, ly:0 };
 const JOY_R = 52;
 const joyBase = $('joyBase'), joyKnob = $('joyKnob'), joyHint = $('joyHint');
-let autoFire = true;
+let autoFire = true, afT = 0, afHit = false;
 function enableTouch(){ touchMode = true; document.body.classList.add('touch'); }
 function joyShow(x, y){ joyBase.style.display = 'block'; joyBase.style.left = (x - 60) + 'px'; joyBase.style.top = (y - 60) + 'px'; joyHint.style.opacity = '0'; joyKnob.style.transform = 'translate(0px,0px)'; }
 function joyHide(){ joyBase.style.display = 'none'; joyHint.style.opacity = ''; }
@@ -1775,10 +1811,13 @@ function update(dt){
     if (P.reloading <= 0){ P.reloading = 0; const n = Math.min(w.mag - w.cur, w.res); w.cur += n; w.res -= n; } }
   let wantFire = firing && (w.auto || fresh);
   if (touchMode && autoFire && !wantFire && P.fireCd <= 0 && P.reloading <= 0){
-    camera.updateMatrixWorld(true); raycaster.setFromCamera(v2.set(0,0), camera);
-    const h = raycaster.intersectObjects(targets(true), false);
-    wantFire = h.length > 0 && !!h[0].object.userData.enemy && h[0].distance < (w.melee ? w.range : (w.far || 45));
-  }
+    afT -= dt;
+    if (afT <= 0){ afT = 0.07;
+      camera.updateMatrixWorld(true); raycaster.setFromCamera(v2.set(0,0), camera);
+      const h = raycaster.intersectObjects(targets(true), false);
+      afHit = h.length > 0 && !!h[0].object.userData.enemy && h[0].distance < (w.melee ? w.range : (w.far || 45)); }
+    wantFire = afHit;
+  } else { afT = 0; afHit = false; }
   if (wantFire && P.fireCd <= 0) shoot();
   if (!w.melee && w.cur === 0 && w.res > 0 && P.reloading <= 0 && P.switchT <= 0 && P.fireCd <= 0) reload();
   P.recoil = Math.max(0, P.recoil - dt*3.2);
@@ -1936,8 +1975,11 @@ function update(dt){
 /* ---------- 나침반 ---------- */
 const cmp = $('cmp'), cg = cmp.getContext('2d');
 function wrapA(a){ while (a > Math.PI) a -= Math.PI*2; while (a < -Math.PI) a += Math.PI*2; return a; }
+let cmpKey = '';
 function drawCompass(){
   const W = 840, H = 92, c = W/2, ppr = 400;
+  const key = Math.round(P.yaw*400) + '|' + Math.round(Math.hypot(L.goal.x - P.x, L.goal.z - P.z)) + '|' + Math.round(Math.atan2(L.goal.x - P.x, L.goal.z - P.z)*200);
+  if (key === cmpKey) return; cmpKey = key;
   cg.clearRect(0,0,W,H);
   const bg = cg.createLinearGradient(0,0,W,0);
   bg.addColorStop(0,'rgba(8,12,16,0)'); bg.addColorStop(0.18,'rgba(8,12,16,.6)'); bg.addColorStop(0.82,'rgba(8,12,16,.6)'); bg.addColorStop(1,'rgba(8,12,16,0)');
@@ -1953,7 +1995,7 @@ function drawCompass(){
   }
   const dx = L.goal.x - P.x, dz = L.goal.z - P.z, rel = wrapA(Math.atan2(-dx, -dz) - P.yaw);
   let gx = c - rel*ppr; const off = gx < 24 || gx > W-24; gx = Math.max(24, Math.min(W-24, gx));
-  cg.save(); cg.translate(gx, 28); cg.rotate(Math.PI/4); cg.fillStyle = '#4dff88'; cg.shadowColor = '#4dff88'; cg.shadowBlur = 14;
+  cg.save(); cg.translate(gx, 28); cg.rotate(Math.PI/4); cg.fillStyle = '#4dff88'; if (!COARSE){ cg.shadowColor = '#4dff88'; cg.shadowBlur = 14; }
   cg.fillRect(-8,-8,16,16); cg.restore();
   if (off){ cg.fillStyle = '#4dff88'; cg.font = '700 22px system-ui, sans-serif'; cg.fillText(gx < c ? '◀' : '▶', gx + (gx < c ? 22 : -22), 28); }
   cg.fillStyle = '#e9e4d4'; cg.beginPath(); cg.moveTo(c, 6); cg.lineTo(c+7, 0); cg.lineTo(c-7, 0); cg.fill();
@@ -2028,7 +2070,8 @@ function frame(now){
   else if (G.state === 'cutscene') updateCine(dt);
   else if (G.state === 'menu'){ menuA += dt*0.1; const c = L.n*CS/2;
     camera.position.set(c + Math.sin(menuA)*13, 17, c + Math.cos(menuA)*13); camera.lookAt(c, 0, c); }
-  if (G.state === 'menu' || G.state === 'cutscene') for (const e of enemies) if (e.mixer && !e.dead) e.mixer.update(dt);
+  cullEnemies(dt, G.state === 'playing');
+  if (G.state === 'menu' || G.state === 'cutscene') for (const e of enemies) if (e.mixer && !e.dead) mixStep(e, dt);
   gun.visible = G.state !== 'menu' && G.state !== 'cutscene' && G.state !== 'win' && !scoped;
   if (G.state !== 'playing'){ updateLamps(dt); if (G.state === 'menu') updateDust(dt); }
   updateRain(dt); updateLightning(dt);
