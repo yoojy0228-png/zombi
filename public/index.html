@@ -694,9 +694,14 @@ function bfs(sx, sz){
       const j = nz*n + nx; if (d[j] < 0){ d[j] = d[i] + 1; q[t++] = j; } } }
   return d;
 }
-function buildLevel(stage){
-  const k = Math.min(4 + stage, 9), n = 2*k + 1;
-  const grid = new Uint8Array(n*n).fill(1); L.n = n; L.grid = grid;
+function buildLevel(stage, arena){
+  const k = arena ? 6 : Math.min(4 + stage, 9), n = 2*k + 1;
+  const grid = new Uint8Array(n*n).fill(1); L.n = n; L.grid = grid; L.arena = !!arena;
+  if (arena){
+    // 보스 경기장: 벽으로 둘러싸인 넓은 광장 + 엄폐용 기둥 4개
+    for (let z=1; z<n-1; z++) for (let x=1; x<n-1; x++) grid[z*n+x] = 0;
+    for (const c of [[4,4],[n-5,4],[4,n-5],[n-5,n-5]]) grid[c[1]*n + c[0]] = 1;
+  } else {
   // 미로 파기
   const stack = [[1,1]]; grid[n+1] = 0;
   while (stack.length){
@@ -715,6 +720,7 @@ function buildLevel(stage){
   const rooms = Math.min(4, 1 + Math.floor(stage/2)), span = (n-5)/2;
   for (let r=0; r<rooms; r++){ const cx = 3 + 2*Math.floor(Math.random()*span), cz = 3 + 2*Math.floor(Math.random()*span);
     for (let z=cz-1; z<=cz+1; z++) for (let x=cx-1; x<=cx+1; x++) grid[z*n+x] = 0; }
+  }
   // 도착지: 출발점에서 가장 먼 칸
   const d = bfs(1,1); let best = 0, gi = n+1;
   for (let z=1; z<n-1; z+=2) for (let x=1; x<n-1; x+=2){ const i = z*n+x; if (d[i] > best){ best = d[i]; gi = i; } }
@@ -1384,7 +1390,7 @@ function startStage(s, quiet){
   G.stage = s;
   for (const e of enemies) removeEnemy(e); enemies.length = 0;
   for (const p of pickups) scene.remove(p.g); pickups.length = 0;
-  buildLevel(s); for (const m of decals) m.visible = false;
+  buildLevel(s, isBossStage(s)); for (const m of decals) m.visible = false;
   P.x = 1.5*CS; P.z = 1.5*CS; P.pitch = 0;
   const gd = bfs(L.goal.cx, L.goal.cz); let bd = 1e9, fx = 1, fz = 0;
   for (const a of DIRS){ if (solid(1+a[0], 1+a[1])) continue; const v = gd[(1+a[1])*L.n + 1+a[0]]; if (v >= 0 && v < bd){ bd = v; fx = a[0]; fz = a[1]; } }
@@ -1452,7 +1458,8 @@ function setBeacon(locked){
 }
 function spawnBoss(s){
   const tier = Math.max(1, Math.floor(s/5)), fin = G.mode === 'story' && s === FINAL;
-  const e = makeEnemy('boss', L.goal.x, L.goal.z, 1);
+  const bx = L.arena ? (Math.floor(L.n/2) + 0.5)*CS : L.goal.x, bz = L.arena ? (Math.floor(L.n/2) + 0.5)*CS : L.goal.z;
+  const e = makeEnemy('boss', bx, bz, 1);
   const H = DIFFS.hard;   // '어려움' 기준으로 설계 → 다른 난이도는 비율로
   e.maxHp = e.hp = 4000 * (1 + 0.45*(tier - 1)) * (fin ? 1.15 : 1) * (D.hp / H.hp);
   e.boss = true;
@@ -1556,7 +1563,7 @@ function updateBoss(e, dt, dx, dz, d){
     case 'chargeW': {
       atk = true;
       if (b.t < b.dur*0.72){ face(dx, dz, 9); b.dir = [Math.sin(g.rotation.y), Math.cos(g.rotation.y)]; }
-      b.len = clearLen(g.position.x, g.position.z, b.dir[0], b.dir[1], 34);
+      b.len = clearLen(g.position.x, g.position.z, b.dir[0], b.dir[1], 64);
       const u = Math.min(1, b.t/b.dur);
       BT.line.visible = true; BT.line.rotation.y = Math.atan2(b.dir[0], b.dir[1]) + Math.PI;
       BT.line.scale.set(2.6, b.len + 1, 1); BT.line.position.set(g.position.x + b.dir[0]*(b.len + 1)/2, 0.05, g.position.z + b.dir[1]*(b.len + 1)/2);
@@ -1904,8 +1911,8 @@ function descendShot(d, txt, who){
   return { d, txt, who, free:true, cam:k => { const lk = povLook(6);
     return [P.x - fx*1.2*(1-k), mix(11, EYE, k), P.z - fz*1.2*(1-k), mix(P.x + fx*2, lk[0], k), mix(0, lk[1], k), mix(P.z + fz*2, lk[2], k)]; } };
 }
-function goalShot(d, ttl, txt, who, a0){
-  const gx = L.goal.x, gz = L.goal.z;
+function goalShot(d, ttl, txt, who, a0, at){
+  const gx = at ? at.x : L.goal.x, gz = at ? at.z : L.goal.z;
   return { d, ttl, txt, who, fog:0.022, cam:k => { const a = a0 + k*0.9;
     return [gx + Math.sin(a)*7, mix(8, 6, k), gz + Math.cos(a)*7, gx, 1.2, gz]; } };
 }
@@ -1929,7 +1936,7 @@ function stageCut(s){
   const ttl = (fin ? '최종 봉쇄선' : '봉쇄선 ' + s + ' / ' + FINAL) + '<small>' + st[0] + '</small>';
   const brute = enemies.find(e => e.type === 'brute');
   const shots = [goalShot(G.boss ? 4.2 : 3.2, G.boss ? ttl.replace('<small>', '<small>보스 · ' + G.boss.bs.name + ' — ') : ttl,
-    G.boss ? '⚠ ' + G.boss.bs.name + ' — 쓰러뜨리기 전엔 출구가 열리지 않는다.' : brute ? '출구를 거대한 놈이 지키고 있다.' : '저 초록 빛이 출구다.', '', Math.random()*6)];
+    G.boss ? '⚠ ' + G.boss.bs.name + ' — 쓰러뜨리기 전엔 출구가 열리지 않는다.' : brute ? '출구를 거대한 놈이 지키고 있다.' : '저 초록 빛이 출구다.', '', Math.random()*6, G.boss ? G.boss.g.position : null)];
   if (s >= 2) shots[0].go = () => setTimeout(() => sfx.roar(), 500);
   if (s === 4){
     const gn = enemies.find(e => e.type === 'gunner');
