@@ -2181,11 +2181,12 @@ function achList(){
     const dt = on ? '<div class="dt">' + new Date(AS.u[a[0]]).toLocaleDateString('ko-KR') + ' 달성</div>' : '';
     return '<div class="ach-it' + (on ? ' on' : '') + '"><span class="ic">' + a[1] + '</span><div class="tx"><div class="nm">' + a[2] + '</div><div class="ds">' + a[3] + '</div>' + pg + dt + '</div></div>'; }).join('');
 }
-let achFrom = 'menu';
-function openAch(from){ achFrom = from; achList(); show('ach'); }
+let achFrom = 'menu', achOpen = false;
+function openAch(from){ achFrom = from; achOpen = true; achList(); show('ach'); }
+function closeAch(){ achOpen = false; show(achFrom); }
 $('achBtnMenu').addEventListener('click', () => openAch('menu'));
 $('achBtnPause').addEventListener('click', () => openAch('pause'));
-$('achClose').addEventListener('click', () => show(achFrom));
+$('achClose').addEventListener('click', closeAch);
 
 /* ---------- 체크포인트 (스토리 5단계마다) ---------- */
 const cpKey = () => 'deadnight_cp' + (diff === 'normal' ? '' : '_' + diff);
@@ -2348,7 +2349,7 @@ document.addEventListener('wheel', e => { if (G.state !== 'playing') return; con
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('keydown', e => {
   if (ST.open){ if (e.code === 'Escape' && !ST.lock) closeSettings(); return; }
-  if ($('ach').classList.contains('on')){ if (e.code === 'Escape') show(achFrom); return; }
+  if (achOpen){ if (e.code === 'Escape') closeAch(); return; }
   keys[e.code] = true;
   if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
   if (e.code === 'KeyR' && G.state === 'playing') reload();
