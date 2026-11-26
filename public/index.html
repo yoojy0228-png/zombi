@@ -950,6 +950,10 @@ const sfx = {
   hurt(){ tone('sawtooth', 160, 60, 0.25, 0.4); noise(0.15, 800, 150, 0.35); },
   eshot(v){ noise(0.14, 3800, 250, 0.55*v); tone('square', 140, 45, 0.08, 0.18*v); },
   aim(v){ tone('sine', 1400, 1400, 0.06, 0.07*v); },
+  beep(v){ tone('square', 1700, 1700, 0.05, 0.12*v); },
+  clang(){ tone('square', 1100, 700, 0.07, 0.12); noise(0.06, 5000, 1500, 0.25); },
+  spit(v){ noise(0.25, 1400, 250, 0.4*v); tone('sine', 300, 120, 0.2, 0.15*v); },
+  boom(v){ noise(0.7, 2200, 40, 1.0*v); tone('sawtooth', 90, 28, 0.5, 0.5*v); },
   radio(){ noise(0.25, 2400, 900, 0.12); tone('square', 880, 880, 0.05, 0.06); },
   groan(v){ tone('sawtooth', 70+Math.random()*50, 45+Math.random()*20, 0.7+Math.random()*0.5, 0.16*v); },
   roar(){ tone('sawtooth', 60, 30, 1.2, 0.35); noise(0.9, 500, 120, 0.25); },
@@ -962,6 +966,9 @@ const TYPES = {
   walker: { hp:100, speed:[3.0,3.4], dmg:13, scale:1.0,  score:10, skin:[0xffffff,0xe6f0dc,0xd8dce6], cloth:[0x5a6272,0x6d4a3a,0x45584a,0x7a3a3a,0x8a8468], pants:[0x2c3140,0x3a3329,0x26292c], eye:0xfff0a0, lean:0.3, wide:1 },
   runner: { hp:60,  speed:[3.8,4.2], dmg:10, scale:0.9,  score:20, skin:[0xf0c8b8,0xe8b0a0], cloth:[0x7a1f24], pants:[0x3a1518,0x24262c], eye:0xff3b3b, lean:0.6, wide:0.88 },
   gunner: { hp:90,  speed:[3.3,3.7], dmg:10, scale:1.0,  score:35, skin:[0xd8dcc8], cloth:[0x4a5434,0x3f4a30], pants:[0x2e3424], eye:0xffa030, lean:0.15, wide:1 },
+  bomber: { hp:70,  speed:[3.6,4.0], dmg:0,  scale:1.05, score:25, skin:[0xd8c890], cloth:[0x6a5a2a], pants:[0x3a3020], eye:0xff8a20, lean:0.25, wide:1.45 },
+  shield: { hp:110, speed:[2.6,3.0], dmg:15, scale:1.05, score:40, skin:[0xc8ccd4], cloth:[0x2a3442], pants:[0x1e242c], eye:0x7ad8ff, lean:0.1, wide:1.1 },
+  spitter:{ hp:80,  speed:[2.8,3.2], dmg:9,  scale:0.95, score:30, skin:[0xb8e0a0], cloth:[0x3a4a2a], pants:[0x262e1e], eye:0x9dff3a, lean:0.4, wide:0.85 },
   boss:   { hp:4000, speed:[2.4,2.4], dmg:30, scale:2.35, score:2500, skin:[0x8a5a50], cloth:[0x3a1a1a], pants:[0x241414], eye:0xff3018, lean:0.3, wide:1.5 },
   brute:  { hp:520, speed:[2.3,2.7], dmg:32, scale:1.75, score:80, skin:[0xa888c0], cloth:[0x2a2233], pants:[0x241c2c], eye:0x7dff5a, lean:0.35, wide:1.4 }
 };
@@ -1066,7 +1073,7 @@ function makeProcEnemy(type, x, z, stageN){
     armBase: -1.25 + (Math.random()-.5)*0.4, armBaseR: -1.0 + (Math.random()-.5)*0.7,
     limp: Math.random() < 0.4 ? 0.45 + Math.random()*0.3 : 1, tilt: (Math.random()-.5)*0.5 };
   for (const m of meshes) m.userData.enemy = e;
-  if (type === 'gunner') armGunner(e);
+  if (type === 'gunner') armGunner(e); else if (type === 'bomber') armBomber(e); else if (type === 'shield') armShield(e);
   poseEnemy(e); enemies.push(e); return e;
 }
 function poseEnemy(e){
@@ -1081,7 +1088,7 @@ function poseEnemy(e){
 /* ---------- 좀비 모델 (업로드된 GLB) ---------- */
 const Z = { ready:false, scene:null, walk:null, attack:null, idle:null };
 const hitM = new THREE.MeshBasicMaterial({ visible:false });
-const TINTS = { walker:[0xffffff, 0xe6f2e0, 0xf2e2e2, 0xdfe4f2], runner:[0xffb4a2], gunner:[0xb4c48e], brute:[0xb89ad8], boss:[0xc07870] };
+const TINTS = { walker:[0xffffff, 0xe6f2e0, 0xf2e2e2, 0xdfe4f2], runner:[0xffb4a2], gunner:[0xb4c48e], brute:[0xb89ad8], boss:[0xc07870], bomber:[0xe0c070], shield:[0xb8c4d8], spitter:[0x9ad870] };
 function cloneSkinned(source){
   const srcOf = new Map(), cloneOf = new Map(), clone = source.clone();
   (function walk(a, b){ srcOf.set(b, a); cloneOf.set(a, b); for (let i=0; i<a.children.length; i++) walk(a.children[i], b.children[i]); })(source, clone);
@@ -1129,7 +1136,7 @@ function makeModelEnemy(type, x, z, stageN){
     hp: def.hp * (1 + (stageN-1)*0.09) * D.hp, speed: sp * (1 + Math.min(Math.max(stageN-1, 0), 10)*0.008) * D.spd,
     phase:0, atk:0.4, flash:0, stagger:0, dead:false, deadT:0 };
   for (const m of meshes) m.userData.enemy = e;
-  if (type === 'gunner') armGunner(e);
+  if (type === 'gunner') armGunner(e); else if (type === 'bomber') armBomber(e); else if (type === 'shield') armShield(e);
   enemies.push(e); return e;
 }
 function animModelEnemy(e, dt, moving, sp, attacking){
@@ -1154,6 +1161,7 @@ function cullEnemies(dt, walls){
     const g = e.g, dx = g.position.x - cx, dz = g.position.z - cz, d = Math.hypot(dx, dz);
     e.camD = d;
     if (e.boss){ g.visible = d < 90; continue; }
+    if (e.gone){ g.visible = false; continue; }
     let vis = d < (walls ? CULL_D : 90);
     if (vis && d > 3 && walls && (dx*fx + dz*fz) < -2.2) vis = false;
     if (vis && walls && d > 6){
@@ -1223,8 +1231,64 @@ function updateBullets(dt){
   }
   return false;
 }
+/* ---------- 새 좀비: 폭발 / 방패 / 산성 ---------- */
+const shieldM = new THREE.MeshStandardMaterial({ color:0x3a4250, roughness:0.45, metalness:0.75 });
+const shieldWinM = new THREE.MeshStandardMaterial({ color:0x1a2a30, roughness:0.1, metalness:0.2, transparent:true, opacity:0.6 });
+function armBomber(e){
+  e.sacM = new THREE.MeshBasicMaterial({ color:0xff6a18 });
+  for (const q of [[0,1.05,0.26,0.36],[0.2,1.3,0.18,0.2],[-0.18,0.85,0.2,0.22]]){
+    const m = new THREE.Mesh(SPH, e.sacM); m.scale.setScalar(q[3]); m.position.set(q[0], q[1], q[2]); e.g.add(m); }
+  e.fuse = 0;
+}
+function armShield(e){
+  const sh = new THREE.Group(); sh.position.set(0, 0.88, 0.45);
+  const plate = new THREE.Mesh(BOX, shieldM); plate.scale.set(0.82, 1.15, 0.06); plate.castShadow = SHADOWS; sh.add(plate);
+  const win = new THREE.Mesh(BOX, shieldWinM); win.scale.set(0.42, 0.14, 0.07); win.position.set(0, 0.36, 0.005); sh.add(win);
+  const rim = new THREE.Mesh(BOX, gunBodyM); rim.scale.set(0.86, 0.05, 0.08); rim.position.y = 0.58; sh.add(rim);
+  e.g.add(sh); e.shield = sh;
+}
+// 앞에서 쏜 몸통 사격은 방패가 막음
+function shieldBlocks(e){
+  if (!e.shield) return false;
+  const fx = Math.sin(e.g.rotation.y), fz = Math.cos(e.g.rotation.y), px = P.x - e.g.position.x, pz = P.z - e.g.position.z, pd = Math.hypot(px, pz) || 1;
+  return (fx*px + fz*pz)/pd > 0.35;
+}
+const fireM = new THREE.MeshBasicMaterial({ color:0xff8a30, transparent:true, opacity:0.8, depthWrite:false, fog:false, blending:THREE.AdditiveBlending });
+const fireballs = []; for (let i=0;i<5;i++){ const m = new THREE.Mesh(SPH, fireM.clone()); m.visible = false; scene.add(m); fireballs.push({ m, t:0, on:false, r:1 }); }
+const BOOM_R = 3.8;
+function boom(e){
+  if (e.boomed) return; e.boomed = true;
+  const x = e.g.position.x, z = e.g.position.z;
+  if (!e.dead){ e.dead = true; e.deadT = 0; e.blob.visible = false; decal(x, z, 1.3); }
+  e.gone = true; e.deadT = Math.max(e.deadT, 3.2);
+  const f = fireballs.find(q => !q.on) || fireballs[0]; Object.assign(f, { on:true, t:0, r:BOOM_R }); f.m.visible = true; f.m.position.set(x, 1.0, z);
+  burst({ x, y:1.1, z }, COARSE ? 16 : 30, sparkM, 8); burst({ x, y:0.8, z }, 10, bloodM, 5);
+  const pd = Math.hypot(P.x - x, P.z - z);
+  sfx.boom(Math.max(0.3, 1 - pd/40));
+  if (pd < BOOM_R){ P.hp -= 38*D.dmg*(1 - pd/BOOM_R*0.5); vig = 1; P.shake = 0.22; dmgDir(x, z); sfx.hurt();
+    if (P.hp <= 0){ P.hp = 0; refreshHud(); gameOver(); } }
+  else if (pd < 16) P.shake = Math.max(P.shake, 0.1*(1 - pd/16));
+  for (const o of enemies){ if (o === e || o.dead) continue;
+    const od = Math.hypot(o.g.position.x - x, o.g.position.z - z);
+    if (od < BOOM_R) damage(o, false, { x:o.g.position.x, y:1.2, z:o.g.position.z }, (o.boss ? 120 : 150)*(1 - od/BOOM_R*0.4), true); }
+}
+function spit(e){
+  const q = globs.find(o => !o.on); if (!q) return;
+  const g = e.g, ft = 0.95;
+  let tx = P.x + G.pvx*ft*0.7 + (Math.random() - 0.5)*1.2, tz = P.z + G.pvz*ft*0.7 + (Math.random() - 0.5)*1.2;
+  if (solid(Math.floor(tx/CS), Math.floor(tz/CS))){ tx = P.x; tz = P.z; }
+  Object.assign(q, { on:true, t:0, T:ft, sx:g.position.x, sz:g.position.z, tx, tz, h0:1.7, arc:3.2, dmg:11*D.dmg, dot:9*D.dmg, pt:3.5 });
+  q.m.visible = true; q.mk.visible = true; q.mk.position.set(tx, 0.08, tz); q.mk.scale.setScalar(0.2);
+  sfx.spit(Math.max(0.2, 1 - Math.hypot(P.x - g.position.x, P.z - g.position.z)/30));
+}
+const NEWS = {
+  bomber:'⚠ 폭발 좀비 — 가까이 오면 터집니다! 멀리서 쏘세요. 죽으면 주변 좀비도 함께 터집니다',
+  shield:'⚠ 방패 좀비 — 정면 몸통 사격은 막힙니다. 머리를 노리거나 옆·뒤로 돌아가세요',
+  spitter:'⚠ 산성 좀비 — 멀리서 산성을 뱉습니다. 초록 표시가 보이면 피하세요',
+  gunner:'⚠ 총 든 좀비 — 붉은 조준광이 보이면 옆으로 피하세요'
+};
 function makeEnemy(type, x, z, stageN){ return Z.scene ? makeModelEnemy(type, x, z, stageN) : makeProcEnemy(type, x, z, stageN); }
-function removeEnemy(e){ scene.remove(e.g); e.mats.forEach(m => m.dispose());
+function removeEnemy(e){ scene.remove(e.g); e.mats.forEach(m => m.dispose()); if (e.sacM) e.sacM.dispose();
   if (e.laser){ scene.remove(e.laser); e.laser.geometry.dispose(); e.laser.material.dispose(); }
   if (e.model){ e.mixer.stopAllAction(); e.xm.forEach(m => m.dispose()); e.skels.forEach(k => k.dispose()); } }
 function modelDone(ok){
@@ -1286,7 +1350,7 @@ function totalAmmo(){ let n = 0; for (const w of WEAPONS) if (!w.melee && isFini
 const EYE = 1.7;
 for (const w of WEAPONS) if (!w.melee){ w.cur = w.mag; w.res = w.res0; }
 const P = { x:0, z:0, yaw:0, pitch:0, hp:100, w:2, reloading:0, fireCd:0, recoil:0, bob:0, shake:0, switchT:0, swing:0, ads:0, swx:0, swy:0, gap:7, stepN:0, speedT:0, spf:0 };
-const G = { state:'menu', mode:'story', stage:0, score:0, kills:0, spawnT:0, stageTime:0, totalTime:0, time:0, groanT:2 };
+const G = { pvx:0, pvz:0, seen:{}, state:'menu', mode:'story', stage:0, score:0, kills:0, spawnT:0, stageTime:0, totalTime:0, time:0, groanT:2 };
 const FINAL = 10;
 const aim = { x:0, y:0 };
 const keys = {};
@@ -1379,8 +1443,12 @@ function pickCell(lo, hi){
   return { x:((i % n) + 0.5)*CS, z:(Math.floor(i / n) + 0.5)*CS };
 }
 function gunnerCount(){ let n = 0; for (const e of enemies) if (!e.dead && e.type === 'gunner') n++; return n; }
+function typeCount(t){ let n = 0; for (const e of enemies) if (!e.dead && e.type === t) n++; return n; }
 function randType(s){
   if (s >= 3 && Math.random() < 0.06) return 'brute';
+  if (s >= 3 && Math.random() < Math.min(0.07 + (s-3)*0.015, 0.15) && typeCount('bomber') < Math.min(2 + Math.floor((s-3)/2), 6)) return 'bomber';
+  if (s >= 6 && Math.random() < Math.min(0.07 + (s-6)*0.015, 0.14) && typeCount('shield') < Math.min(2 + Math.floor((s-6)/2), 5)) return 'shield';
+  if (s >= 7 && Math.random() < Math.min(0.07 + (s-7)*0.015, 0.13) && typeCount('spitter') < Math.min(2 + Math.floor((s-7)/3), 4)) return 'spitter';
   if (s >= 4 && Math.random() < Math.min(0.08 + (s-4)*0.02, 0.18) && gunnerCount() < Math.min(2 + Math.floor((s-4)/2), 6)) return 'gunner';
   if (s >= 2 && Math.random() < Math.min(0.15 + s*0.05, 0.5)) return 'runner';
   return 'walker';
@@ -1451,7 +1519,7 @@ function bossFxClear(){
   for (const k in BT) BT[k].visible = false;
   for (const q of globs){ q.on = false; q.m.visible = false; q.mk.visible = false; }
   for (const q of puddles){ q.on = false; q.m.visible = false; }
-  wave.on = false; G.boss = null; bossEl.classList.remove('on', 'stun', 'inv'); setBeacon(false);
+  wave.on = false; G.boss = null; for (const f of fireballs){ f.on = false; f.m.visible = false; } bossEl.classList.remove('on', 'stun', 'inv'); setBeacon(false);
 }
 function setBeacon(locked){
   const c = locked ? 0xff2a3a : 0x4dff88; pillarM.color.setHex(c); ring.material.color.setHex(locked ? 0xff7080 : 0x8dffb0); beaconLight.color.setHex(c);
@@ -1510,7 +1578,7 @@ function throwAcid(e, n){
     let tx = px, tz = pz;
     if (k > 0){ const a = Math.random()*Math.PI*2, r = 1.6 + Math.random()*2.6; tx = (k === 1 ? P.x : px) + Math.cos(a)*r; tz = (k === 1 ? P.z : pz) + Math.sin(a)*r; }
     if (solid(Math.floor(tx/CS), Math.floor(tz/CS))){ tx = P.x; tz = P.z; }
-    Object.assign(q, { on:true, t:0, T:ft + k*0.07, sx:g.position.x, sz:g.position.z, tx, tz });
+    Object.assign(q, { on:true, t:0, T:ft + k*0.07, sx:g.position.x, sz:g.position.z, tx, tz, h0:2.8, arc:6, dmg:18*b.k, dot:14*b.k, pt:5.5 });
     q.m.visible = true; q.mk.visible = true; q.mk.position.set(tx, 0.08, tz); q.mk.scale.setScalar(0.2); k++; }
   noise(0.2, 900, 300, 0.4);
 }
@@ -1628,17 +1696,20 @@ function updateBoss(e, dt, dx, dz, d){
 }
 function updateBossFx(dt){
   const K = G.boss ? G.boss.bs.k : 1;
+  for (const f of fireballs){ if (!f.on) continue; f.t += dt; const u = f.t/0.4;
+    if (u >= 1){ f.on = false; f.m.visible = false; continue; }
+    f.m.scale.setScalar(0.4 + f.r*Math.sqrt(u)); f.m.material.opacity = 0.85*(1 - u); }
   for (const q of globs){ if (!q.on) continue; q.t += dt; const u = Math.min(1, q.t/q.T);
-    q.m.position.set(q.sx + (q.tx - q.sx)*u, 2.8 + Math.sin(u*Math.PI)*6 - u*2.6, q.sz + (q.tz - q.sz)*u);
+    q.m.position.set(q.sx + (q.tx - q.sx)*u, q.h0 + Math.sin(u*Math.PI)*q.arc - u*(q.h0 - 0.2), q.sz + (q.tz - q.sz)*u);
     q.mk.scale.setScalar(0.3 + u*1.3); q.mk.material.opacity = 0.25 + u*0.5;
     if (u >= 1){ q.on = false; q.m.visible = false; q.mk.visible = false; burst({ x:q.tx, y:0.3, z:q.tz }, 10, globM, 3);
-      if (Math.hypot(P.x - q.tx, P.z - q.tz) < 1.7 && bossHurt(18*K, q.tx, q.tz)) return true;
-      const pd = puddles.find(x => !x.on); if (pd){ Object.assign(pd, { on:true, t:5.5, x:q.tx, z:q.tz }); pd.m.visible = true; pd.m.position.set(q.tx, 0.04, q.tz); pd.m.scale.setScalar(1.5); } } }
-  let inAcid = false;
+      if (Math.hypot(P.x - q.tx, P.z - q.tz) < 1.7 && bossHurt(q.dmg, q.tx, q.tz)) return true;
+      const pd = puddles.find(x => !x.on); if (pd){ Object.assign(pd, { on:true, t:q.pt, x:q.tx, z:q.tz, dot:q.dot }); pd.m.visible = true; pd.m.position.set(q.tx, 0.04, q.tz); pd.m.scale.setScalar(1.5); } } }
+  let inAcid = 0;
   for (const q of puddles){ if (!q.on) continue; q.t -= dt; q.m.material.opacity = Math.min(0.35, q.t*0.3) + Math.sin(G.time*6 + q.x)*0.04;
     if (q.t <= 0){ q.on = false; q.m.visible = false; continue; }
-    if (Math.hypot(P.x - q.x, P.z - q.z) < 1.45) inAcid = true; }
-  if (inAcid){ P.hp -= 14*K*dt; vig = Math.max(vig, 0.5); if (P.hp <= 0){ P.hp = 0; refreshHud(); gameOver(); return true; } }
+    if (Math.hypot(P.x - q.x, P.z - q.z) < 1.45) inAcid = Math.max(inAcid, q.dot); }
+  if (inAcid){ P.hp -= inAcid*dt; vig = Math.max(vig, 0.5); if (P.hp <= 0){ P.hp = 0; refreshHud(); gameOver(); return true; } }
   if (wave.on){ wave.r += 10*dt; BT.wave.position.set(wave.x, 0.3, wave.z); BT.wave.scale.setScalar(wave.r); BT.wave.material.opacity = Math.max(0, 0.7 - wave.r/22);
     const pd = Math.hypot(P.x - wave.x, P.z - wave.z);
     if (!wave.hit && Math.abs(pd - wave.r) < 0.7 && los(wave.x, wave.z, P.x, P.z)){ wave.hit = true; if (bossHurt(22*K, wave.x, wave.z)) return true; }
@@ -1758,8 +1829,12 @@ function updateDmgNums(dt){
     q.el.style.transform = 'translate3d(' + ((dnV.x*0.5 + 0.5)*W + q.jx).toFixed(1) + 'px,' + ((-dnV.y*0.5 + 0.5)*H + q.jy).toFixed(1) + 'px,0) translate(-50%,-50%) scale(' + sc.toFixed(2) + ')';
   }
 }
-function damage(e, head, point, base){
+function damage(e, head, point, base, boomSrc){
   let weak = false;
+  if (!head && !boomSrc && shieldBlocks(e)){
+    const v = Math.max(1, Math.round(base*0.1)); e.hp -= v; dmgNum(point, '막힘 ' + v, 'imm'); burst(point, 6, sparkM, 3.5); sfx.clang();
+    hud.hit.classList.remove('kill', 'head'); hud.hit.classList.add('show'); hitT = 0.05;
+    if (e.hp > 0) return; base = 0; }
   if (e.boss){ const k = bossDmgMul(e); if (k === 0){ burst(point, 4, sparkM, 3); dmgNum(point, '무적', 'imm'); sfx.hit(); return; } base *= k; weak = k > 1; }
   const dmg = base * (head ? 2 : 1) * (0.9 + Math.random()*0.2);
   e.hp -= dmg; dmgNum(point, String(Math.max(1, Math.round(dmg))), (e.hp <= 0 ? 'kill' : weak ? 'weak' : '') + (head ? ' head' : ''));
@@ -1771,6 +1846,7 @@ function damage(e, head, point, base){
     G.kills++; G.score += Math.round(e.def.score * (head ? 1.5 : 1));
     hud.hit.classList.add('kill'); hitT = 0.16;
     if (e.boss){ bossDown(e); head ? sfx.head() : sfx.hit(); return; }
+    if (e.type === 'bomber') boom(e);
     const pts = $('pts'); pts.textContent = '+' + Math.round(e.def.score * (head ? 1.5 : 1)) + (head ? ' 헤드샷' : '');
     pts.className = 'display' + (head ? ' head' : ''); void pts.offsetWidth; pts.classList.add('go');
     const x = e.g.position.x, z = e.g.position.z, brute = e.type === 'brute' || (e.minion && Math.random() < 0.4);
@@ -1790,6 +1866,7 @@ function reset(){
   Object.assign(P, { x:0, z:0, yaw:0, pitch:0, hp:100, w:2, reloading:0, fireCd:0, recoil:0, bob:0, shake:0, switchT:0, swing:0, ads:0, swx:0, swy:0, gap:7, stepN:0, speedT:0, spf:0 });
   for (const w of WEAPONS) if (!w.melee){ w.cur = w.mag; w.res = w.res0; }
   showWeapon(P.w); aiming = false; fresh = false;
+  G.seen = {}; G.pvx = G.pvz = 0; G.lpx = undefined;
   Object.assign(G, { stage:0, score:0, kills:0, spawnT:3, stageTime:0, totalTime:0, time:0, groanT:3 });
   for (const b of bullets){ b.life = 0; b.m.visible = false; }
   bossFxClear();
@@ -2328,6 +2405,9 @@ function update(dt){
   pillarM.opacity = 0.3 + Math.sin(G.time*3)*0.1;
 
   // 적
+  { if (G.lpx === undefined){ G.lpx = P.x; G.lpz = P.z; }
+    const k = Math.min(1, dt*6); G.pvx += (Math.max(-8, Math.min(8, (P.x - G.lpx)/Math.max(dt, 1e-4))) - G.pvx)*k; G.pvz += (Math.max(-8, Math.min(8, (P.z - G.lpz)/Math.max(dt, 1e-4))) - G.pvz)*k;
+    G.lpx = P.x; G.lpz = P.z; }
   let nearest = 999;
   for (let i = enemies.length-1; i >= 0; i--){
     const e = enemies[i], g = e.g;
@@ -2375,6 +2455,23 @@ function update(dt){
         }
       } else { e.aimT = 0; e.lock = null; e.laser.visible = false; e.burst = 0; e.rep = false; }
     }
+    if (NEWS[e.type] && !G.seen[e.type] && d < 22){ G.seen[e.type] = 1; toast(NEWS[e.type], 5.5); }
+    if (e.type === 'bomber'){
+      if (e.fuse > 0){ hold = true; e.fuse -= dt; const bl = Math.floor(e.fuse*16) % 2;
+        e.sacM.color.setHex(bl ? 0xffffff : 0xff3010); if (bl !== e.bl){ e.bl = bl; if (bl) sfx.beep(Math.max(0.3, 1 - d/25)); }
+        if (e.fuse <= 0){ boom(e); if (G.state !== 'playing') return; continue; } }
+      else if (d < 2.3 && e.stagger <= 0){ e.fuse = 0.75; }
+      else e.sacM.color.setHex(0xff6a18 + (Math.sin(G.time*5 + i) > 0.6 ? 0x002000 : 0));
+    }
+    if (e.type === 'spitter'){
+      e.losT = (e.losT || 0) - dt; if (e.losT <= 0){ e.losT = 0.25; e.see = d < 20 && los(g.position.x, g.position.z, P.x, P.z); }
+      if (e.cd === undefined) e.cd = 1.2 + Math.random()*1.5;
+      e.cd -= dt;
+      if (e.see && d > 5 && e.stagger <= 0){ hold = true; mx = dx/d; mz = dz/d;
+        if (e.spitT > 0){ e.spitT -= dt; if (e.spitT <= 0){ spit(e); e.cd = 2.6 + Math.random()*1.2; } }
+        else if (e.cd <= 0) e.spitT = 0.55;
+      } else e.spitT = 0;
+    }
     let diff = Math.atan2(mx, mz) - g.rotation.y;
     while (diff > Math.PI) diff -= Math.PI*2; while (diff < -Math.PI) diff += Math.PI*2;
     g.rotation.y += diff * Math.min(1, dt*6);
@@ -2393,7 +2490,7 @@ function update(dt){
     if (e.model) animModelEnemy(e, dt, walking, sp, d < reach*1.15); else poseEnemy(e);
     // 공격
     e.atk -= dt;
-    if (d < reach){
+    if (d < reach && e.type !== 'bomber'){
       if (e.atk <= 0){ e.atk = e.type === 'runner' ? 0.7 : 1.0;
         P.hp -= e.def.dmg * D.dmg; vig = 1; P.shake = 0.09; sfx.hurt(); dmgDir(g.position.x, g.position.z);
         if (P.hp <= 0){ P.hp = 0; refreshHud(); gameOver(); return; } }
