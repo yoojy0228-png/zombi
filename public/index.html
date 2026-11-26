@@ -123,6 +123,8 @@
   body.touch #bossbar .nm b { font-size:14px; } body.touch #bossbar .nm { font-size:11px; } body.touch #bossbar .bar { height:8px; }
   #radio { position:absolute; left:16px; top:78px; max-width:min(440px,46vw); padding:9px 14px 10px; border-left:3px solid var(--toxic); opacity:0; transform:translateX(-8px); transition:opacity .5s, transform .5s; }
   #radio.show { opacity:1; transform:none; }
+  #radio.h { border-left-color:#7ab8ff; } #radio.h .who { color:#7ab8ff; }
+  #radio.s { border-left-color:#888; } #radio.s .who { color:#999; } #radio.s .msg { opacity:.7; letter-spacing:.06em; }
   #radio .who { font-size:10px; letter-spacing:.22em; color:var(--toxic); margin-bottom:3px; }
   #radio .msg { font-size:14px; line-height:1.5; }
   .story { text-align:left; font-size:15px; line-height:1.85; opacity:.9; margin-top:18px; max-height:52vh; overflow-y:auto; }
@@ -143,6 +145,18 @@
   .lnk:hover { border-color:var(--toxic); color:var(--toxic); }
   #settings .box { max-width:min(980px,94vw); }
   #ach .box { max-width:min(900px,94vw); }
+  #doc .box { max-width:min(560px,92vw); }
+  .paper { background:linear-gradient(180deg,#ece6d2,#d9d1b8); color:#2a251c; padding:26px 30px 22px; border-radius:2px; box-shadow:0 18px 50px rgba(0,0,0,.7); transform:rotate(-1deg); text-align:left; }
+  .paper .no { font-size:11px; letter-spacing:.3em; color:#7a2a20; }
+  .paper h2 { font-family:"Black Han Sans",system-ui,sans-serif; font-weight:400; font-size:24px; margin:6px 0 14px; color:#1e1a12; }
+  .paper .bd { font-family:"Courier New",ui-monospace,monospace; font-size:15px; line-height:1.75; white-space:pre-line; }
+  .paper .st { margin-top:14px; font-size:11px; color:#6a604a; letter-spacing:.1em; }
+  #doc .btn, #arch .btn { margin-top:22px; }
+  #arch .box { max-width:min(820px,94vw); }
+  .arch-list { display:flex; flex-direction:column; gap:12px; max-height:60vh; overflow-y:auto; margin-top:14px; padding:4px 6px; }
+  .arch-list .paper { transform:none; padding:16px 20px; } .arch-list .paper h2 { font-size:19px; margin:4px 0 8px; } .arch-list .paper .bd { font-size:13px; }
+  .arch-list .lock { padding:14px 18px; border:1px dashed rgba(233,228,212,.25); border-radius:3px; text-align:left; opacity:.55; font-size:13px; }
+  body.touch .paper { padding:14px 16px; } body.touch .paper .bd { font-size:12px; line-height:1.55; } body.touch .paper h2 { font-size:18px; margin:4px 0 8px; } body.touch .arch-list { max-height:none; }
   .ach-sum { font-size:14px; opacity:.75; margin-top:6px; }
   .ach-sum b { color:#ffcf4a; }
   .ach-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:10px; margin:16px 0 18px; max-height:56vh; overflow-y:auto; text-align:left; padding-right:4px; }
@@ -310,7 +324,7 @@
   <div id="wbar"></div>
   <div id="banner" class="display"></div>
   <div id="toast"></div>
-  <div id="radio" class="panel"><div class="who">📻 무전 · 윤 중사</div><div class="msg" id="radioMsg"></div></div>
+  <div id="radio" class="panel"><div class="who" id="radioWho">📻 무전 · 윤 중사</div><div class="msg" id="radioMsg"></div></div>
   <div id="tc">
     <div id="joyHint">이동</div><div id="joyBase"><i id="joyKnob"></i></div>
     <button type="button" class="tb" id="bFire">발사</button>
@@ -325,7 +339,7 @@
 <div id="menu" class="overlay on">
   <div class="box">
     <h1 class="display">망자의 <em>밤</em></h1>
-    <p class="sub">봉쇄된 도시는 거대한 미로가 됐다. 봉쇄선 10개를 넘어 살아서 탈출하라.</p>
+    <p class="sub">연구소의 실험이 도시를 삼켰다. 봉쇄선 10개를 넘어, 새벽이 오기 전에 탈출하라.</p>
     <div class="keys desk">
       <kbd>마우스</kbd><span>시점 이동 (조준선은 화면 중앙 고정) · 클릭(누르고 있으면 연사)으로 사격</span>
       <kbd>W A S D</kbd><span>이동 &nbsp;·&nbsp; 4단계부터 총 쏘는 좀비 등장 · 붉은 조준광이 보이면 피하세요</span>
@@ -344,7 +358,7 @@
     <div class="diff" id="diffSel"><span>난이도</span><button type="button" data-d="veasy">매우 쉬움</button><button type="button" data-d="easy">쉬움</button><button type="button" data-d="normal">중간</button><button type="button" data-d="hard">어려움</button><button type="button" data-d="hell">지옥</button></div>
     <p class="diff-note" id="diffNote"></p>
     <p class="best" id="bestMenu"></p>
-    <button type="button" class="lnk" id="setBtnMenu">⚙ 감도 설정</button> <button type="button" class="lnk" id="achBtnMenu">🏆 업적</button>
+    <button type="button" class="lnk" id="setBtnMenu">⚙ 감도 설정</button> <button type="button" class="lnk" id="achBtnMenu">🏆 업적</button> <button type="button" class="lnk" id="archBtn">📄 기록 보관함</button>
   </div>
 </div>
 
@@ -359,6 +373,20 @@
   </div>
 </div>
 
+<div id="doc" class="overlay">
+  <div class="box">
+    <div class="paper"><div class="no" id="docNo"></div><h2 id="docTitle"></h2><div class="bd" id="docBody"></div><div class="st" id="docSt"></div></div>
+    <button class="btn display sm" id="docClose">계속 <small style="font-size:12px;opacity:.6">(Enter)</small></button>
+  </div>
+</div>
+<div id="arch" class="overlay">
+  <div class="box">
+    <h1 class="display" style="font-size:clamp(34px,6vw,58px)">기록 보관함</h1>
+    <p class="ach-sum" id="archSum"></p>
+    <div class="arch-list" id="archList"></div>
+    <button class="btn display sm" id="archClose">닫기</button>
+  </div>
+</div>
 <div id="ach" class="overlay">
   <div class="box">
     <h1 class="display" style="font-size:clamp(34px,6vw,58px)">업적</h1>
@@ -415,9 +443,10 @@
   <div class="box">
     <h1 class="display" style="font-size:clamp(44px,10vw,92px)">탈출 <em>성공</em></h1>
     <div class="story">
-      <p>헬기가 장벽 위로 떠오른다. 아래로는 불 꺼진 도시가 끝없는 미로처럼 펼쳐져 있다.</p>
-      <p class="rad">📻 윤 중사가 당신의 어깨를 두드린다. "살아 나왔군. 열 개의 봉쇄선을 혼자 뚫은 건 당신이 처음이야."</p>
-      <p>하지만 저 미로 어딘가엔 아직 누군가 남아 있을지도 모른다.</p>
+      <p>헬기가 장벽을 넘는 순간, 해림 위로 첫 번째 폭탄이 떨어졌다. 미로 같던 도시는 불길 속으로 사라졌다.</p>
+      <p class="rad">윤태호 중사가 당신의 어깨를 두드린다. "열 개의 봉쇄선을 혼자 뚫은 건 네가 처음이다. …고맙다."</p>
+      <p>사흘 뒤, 한서연 박사가 가져온 자료가 세상에 공개되었다. 라자루스 프로젝트와 정화 작전의 책임자들은 하나둘 법정에 섰다.</p>
+      <p style="opacity:.7">하지만 폭격이 끝난 잿더미 아래에서, 무언가가 다시 손가락을 움직였다. <span style="color:var(--toxic)">— 무한 모드에서 계속</span></p>
     </div>
     <div class="res">
       <div><span>점수</span><b class="display" id="wScore">0</b></div>
@@ -1370,6 +1399,11 @@ function dropItem(kind, x, z){
     const b = new THREE.Mesh(BOX, medM); b.scale.set(0.5,0.34,0.5); g.add(b);
     const c1 = new THREE.Mesh(BOX, crossM); c1.scale.set(0.3,0.36,0.1); g.add(c1);
     const c2 = new THREE.Mesh(BOX, crossM); c2.scale.set(0.1,0.36,0.3); g.add(c2);
+  } else if (kind === 'doc'){
+    const pg = new THREE.Mesh(BOX, paperM); pg.scale.set(0.42, 0.04, 0.56); pg.rotation.z = 0.5; g.add(pg);
+    const pg2 = new THREE.Mesh(BOX, paperM); pg2.scale.set(0.4, 0.04, 0.54); pg2.position.set(0.05, -0.04, 0.03); pg2.rotation.set(0.1, 0.4, 0.45); g.add(pg2);
+    const beam = new THREE.Mesh(BOX, docGlowM); beam.scale.set(0.14, 6, 0.14); beam.position.y = 2.6; g.add(beam);
+    const halo = new THREE.Mesh(SPH, docGlowM); halo.scale.setScalar(0.6); g.add(halo);
   } else if (kind === 'speed'){
     const seg = (sx,sy,sz, px,py,pz, rz) => { const m = new THREE.Mesh(BOX, speedM); m.scale.set(sx,sy,sz); m.position.set(px,py,pz); m.rotation.z = rz; g.add(m); };
     seg(0.12,0.34,0.1, 0.07,0.17,0, 0.45); seg(0.34,0.1,0.1, 0,0,0, 0); seg(0.12,0.34,0.1, -0.07,-0.17,0, 0.45);
@@ -1379,7 +1413,7 @@ function dropItem(kind, x, z){
     const s = new THREE.Mesh(BOX, ammoBandM); s.scale.set(0.53,0.07,0.33); s.position.y = 0.04; g.add(s);
     for (let i=0;i<4;i++){ const r = new THREE.Mesh(roundG, brassM); r.position.set(-0.15 + i*0.1, 0.22, 0); g.add(r); }
   }
-  g.position.set(x, 0.6, z); scene.add(g); pickups.push({ g, kind, life:kind === 'ammo' ? 25 : kind === 'speed' ? 18 : 15 });
+  g.position.set(x, 0.6, z); scene.add(g); pickups.push({ g, kind, life:kind === 'doc' ? 1e9 : kind === 'ammo' ? 25 : kind === 'speed' ? 18 : 15 });
 }
 function totalAmmo(){ let n = 0; for (const w of WEAPONS) if (!w.melee && isFinite(w.res0)) n += w.cur + w.res; return n; }
 
@@ -1444,8 +1478,15 @@ function updateDmgDir(dt){ const sin = Math.sin(P.yaw), cos = Math.cos(P.yaw);
 function banner(html, t){ hud.banner.innerHTML = html; hud.banner.classList.add('show'); bannerT = t || 2.4; }
 function toast(text, t){ hud.toast.textContent = text; hud.toast.classList.add('show'); toastT = t || 4; }
 const radioEl = $('radio'); let radioT = 0, radioTimer = 0;
+const WHO = { Y:'📻 윤태호 중사', H:'📻 한서연 박사', S:'📻 ??? · 잡음' };
+let rq = [], rqT = 0;
+function radioSeq(lines, delay){ rq = (lines || []).map(l => l.slice()); rqT = delay || 0; }
+function radioMore(lines){ for (const l of lines || []) rq.push(l.slice()); if (!radioT && rqT <= 0) rqT = 0.3; }
+function radioLine(l){ $('radioWho').textContent = WHO[l[0]]; $('radioMsg').textContent = l[1];
+  radioEl.classList.toggle('h', l[0] === 'H'); radioEl.classList.toggle('s', l[0] === 'S');
+  radioEl.classList.add('show'); radioT = 3 + l[1].length*0.075; sfx.radio(); }
 function radio(msg, delay, t){ clearTimeout(radioTimer); radioEl.classList.remove('show'); radioT = 0;
-  radioTimer = setTimeout(() => { $('radioMsg').textContent = msg; radioEl.classList.add('show'); radioT = t || 7; sfx.radio && sfx.radio(); }, (delay || 0)*1000); }
+  radioTimer = setTimeout(() => { $('radioWho').textContent = WHO.Y; radioEl.classList.remove('h', 's'); $('radioMsg').textContent = msg; radioEl.classList.add('show'); radioT = t || 7; sfx.radio && sfx.radio(); }, (delay || 0)*1000); }
 const hpGhost = $('hpghost'), magFill = $('magfill');
 function setT(el, v){ v = String(v); if (el._t !== v){ el._t = v; el.textContent = v; } }
 function setW(el, v){ v = v.toFixed(1) + '%'; if (el._w !== v){ el._w = v; el.style.width = v; } }
@@ -1501,6 +1542,8 @@ function startStage(s, quiet){
   for (const a of DIRS){ if (solid(1+a[0], 1+a[1])) continue; const v = gd[(1+a[1])*L.n + 1+a[0]]; if (v >= 0 && v < bd){ bd = v; fx = a[0]; fz = a[1]; } }
   P.yaw = Math.atan2(-fx, -fz);
   updateField();
+  G.goalD0 = L.field[L.goal.cz*L.n + L.goal.cx]; G.midDone = false; G.nearDone = false; rq = [];
+  if (G.mode === 'story' && G.state !== 'menu') spawnDoc(s);
   bossFxClear(); G.lockMsg = 0; G.used = {}; G.hurt = false; G.hp0 = P.hp;
   if (G.state !== 'menu'){ if (G.mode === 'story' && s >= 5) unlock('cp'); if (G.mode === 'endless'){ if (s >= 10) unlock('e10'); if (s >= 20) unlock('e20'); } }
   const bossSt = isBossStage(s);
@@ -1519,8 +1562,8 @@ function startStage(s, quiet){
 function announce(s){
   const story = G.mode === 'story', fin = story && s === FINAL;
   if (story){ const st = STORY[s - 1];
-    banner((fin ? '최종 봉쇄선' : '봉쇄선 ' + s + ' / ' + FINAL) + '<small>' + st[0] + '</small>', 3.2);
-    radio(st[1], 1.6, 8); }
+    banner((fin ? '최종 봉쇄선' : '봉쇄선 ' + s + ' / ' + FINAL) + '<small>' + st.n + '</small>', 3.2);
+    radioSeq(st.in, 1.6); }
   else if (G.boss){ banner('⚠ 보스 출현 · 스테이지 ' + s + '<small>' + G.boss.bs.name + ' — 예고 동작을 보고 피하세요</small>', 3.2);
     if (!G.bossTip){ G.bossTip = true; setTimeout(() => toast('팁: 돌진을 피해 벽에 부딪히게 하면 기절합니다', 5), 3500); } }
   else { banner('무한 모드 · 스테이지 ' + s + (s === 4 ? '<small>총을 든 좀비가 나타났다</small>' : s >= 2 ? '<small>도착지를 괴물이 지키고 있다</small>' : '<small>끝없는 미로 · 얼마나 버틸 수 있나</small>'), 2.8);
@@ -1528,16 +1571,66 @@ function announce(s){
   sfx.wave(); if (s >= 2) setTimeout(() => sfx.roar(), 900);
 }
 const STORY = [
-  ['지하 대피소', '초록 신호탄 보이나? 거기가 첫 번째 봉쇄선 출구다. 감염자들은 소리에 몰려든다. 서둘러.'],
-  ['시장 골목', '출구 쪽에 덩치 큰 놈이 버티고 있다. 정면으로 붙지 말고 거리를 벌려서 쏴.'],
-  ['폐교', '여기부턴 빠른 놈들이 섞여 있다. 탄약 아끼고, 권총도 잊지 마.'],
-  ['경찰서 앞', '경고! 총을 든 감염자가 있다. 붉은 조준광이 보이면 바로 옆으로 피해!'],
-  ['병원 구역', '절반 왔다. 그런데… 출구에 엄청난 놈이 있다. 돌진할 때 바닥이 빨개지면 옆으로 피해. 벽에 처박히면 잠깐 멈춘다, 그때 쏴!'],
-  ['주택가', '총 든 놈들이 늘고 있다. 벽 모서리를 끼고 움직여.'],
-  ['공단 지대', '헬기 연료 확보 중이다. 조금만 더 버텨.'],
-  ['고가도로 아래', '무장한 놈들이 무리를 지어 다닌다. 조준광을 먼저 끊어.'],
-  ['군 검문소', '마지막 검문소 직전이다. 여기 있던 군인들도… 전부 당했다.'],
-  ['북쪽 헬기장', '헬기가 보인다! 마지막 봉쇄선… 놈들의 왕이 출구를 막고 있다. 반쯤 쓰러뜨리면 더 사나워질 거다. 반드시 살아서 와라!']
+ { n:'지하 대피소',
+   cut:['Y','…들리나? 구조대 윤태호 중사다. 신호를 따라와. 첫 번째 출구는 저 초록 신호탄이다.'],
+   in:[['Y','놈들은 소리에 몰려든다. 총알은 아끼고, 멈추지 마.'],['Y','길에 서류 같은 게 떨어져 있으면 챙겨. 이 사태에 대해 아는 게 너무 없다.']],
+   mid:[['Y','잘하고 있다. 내 레이더에 잡히는 생존 신호는… 너 하나뿐이다.']],
+   near:[['Y','출구가 가깝다. 신호탄 아래로 뛰어!']],
+   doc:['격리 통지문','해림시 전역에 1급 격리 명령을 발령한다.\n원인 불명의 감염병 확산에 따라 모든 시민은 실내에 대기하며 군의 안내를 기다릴 것.\n\n— 국방부 재난대응본부']},
+ { n:'시장 골목',
+   cut:['Y','시장 골목이다. 출구 쪽에 덩치 큰 놈이 버티고 있다. 정면으로 붙지 말고 거리를 벌려.'],
+   in:[['Y','저놈들… 사흘 전까진 이 시장 상인들이었겠지.']],
+   mid:[['Y','하나 묻자. 그 대피소엔 어떻게 혼자 남았지? …아니, 됐다. 지금은 살아남는 게 먼저다.']],
+   near:[['Y','거의 다 왔다. 덩치를 조심해!']],
+   doc:['찢어진 전단지','"해림 생명공학연구소 — 라자루스 프로젝트 임상 참가자 모집.\n사례비 300만 원, 숙식 제공."\n\n전단 뒷면에 볼펜으로 휘갈긴 글씨가 있다.\n"가지 마. 들어간 사람 중에 돌아온 사람이 없어."']},
+ { n:'폐교',
+   cut:['Y','폐교 구역이다. 빠른 놈들이 섞여 있다. 탄약이 떨어지면 권총을 써.'],
+   in:[['S','…치직… 거기… 누구 있어요? 이 무전… 들리면 대답해 주세요…'],['Y','이 채널에 누구지? 신원을 밝혀라.'],['H','한서연… 해림 생명공학연구소 연구원이에요. 해림병원 기록실에 숨어 있어요. 제발… 데리러 와 주세요.']],
+   mid:[['Y','연구소라고? 박사, 이 감염에 대해 뭔가 알고 있나?'],['H','…전부 다요. 만나서 이야기할게요. 이 무전은 누가 엿듣고 있을지 몰라요.']],
+   near:[['H','학교 뒷문으로 나가면 경찰서 쪽이에요. 거기… 조심하세요.']],
+   doc:['학생의 일기장','11월 18일.\n선생님이 오늘은 수업 대신 창문을 전부 막으라고 했다.\n운동장 너머 연구소 쪽 하늘이 하루 종일 주황색이었다.\n엄마한테 전화가 안 된다.']},
+ { n:'경찰서 앞',
+   cut:['Y','경고! 경찰서 쪽에 총을 든 감염자가 있다. 붉은 조준광이 보이면 바로 옆으로 피해!'],
+   in:[['H','감염돼도 몸이 기억하는 동작은 남아요. 방아쇠를 당기는 것 같은… 라자루스는 원래 그걸 노린 거였어요.'],['Y','노렸다고? 무슨 소리야.']],
+   mid:[['H','라자루스는 죽은 병사를 다시 일으키는 약이었어요. 고통도, 두려움도 없이 명령만 따르는 병사.'],['Y','…미친 짓이군.']],
+   near:[['H','다음은 병원이에요. 제가 거기 있어요. 그런데… 병원 마당에 그게 있어요.']],
+   doc:['경찰 무전 녹취록','03:12 "본부, 연구소 정문에서 폭동 발생. 사람들이 서로 물어뜯고 있다."\n03:15 "총을 맞고도 일어난다. 반복한다, 총을 맞고도—"\n\n(교신 끊김)']},
+ { n:'병원 구역',
+   cut:['H','도살자예요… 라자루스 3호. 원래는 연구소 경비원이었어요. 저걸 쓰러뜨려야 병원을 빠져나갈 수 있어요!'],
+   in:[['Y','돌진할 때 바닥이 빨개지면 옆으로 피해. 벽에 처박히면 잠깐 멈출 거다. 그때 쏴!']],
+   mid:[['H','화났어요! 땅을 내려찍으면 충격파가 퍼져요… 기둥 뒤로 숨어요!']],
+   after:[['H','해냈어요…! 지금 기록실 문을 열게요.'],['Y','박사, 합류하면 북쪽 헬기장까지 내가 안내하겠다.'],['H','…다리를 다쳐서 빨리 못 걸어요. 먼저 가세요. 연구 자료를 챙겨서 뒤따라갈게요.']],
+   doc:['라자루스 실험 기록 — 3호','피험자 3호. 34세 남성, 연구소 경비원.\n투여 6시간 후 심정지. 9시간 후 재활동.\n근력 340% 증가. 통제 불가.\n격리실 벽을 부수고 탈출함.\n\n— 책임연구원 한서연']},
+ { n:'주택가',
+   cut:['Y','주택가다. 총 든 놈들이 늘고 있다. 벽 모서리를 끼고 움직여.'],
+   in:[['H','들려요? 병원을 빠져나왔어요. 당신이 지나간 길을 따라가고 있어요.'],['Y','박사, 하나만 묻지. 이 사태… 사고였나?']],
+   mid:[['H','…아니요. 연구소는 실패한 걸 알면서도 실험을 계속했어요. 군에서 돈을 댔으니까요.'],['Y','군이라고…?']],
+   near:[['Y','…알겠다. 일단 살아서 나가자. 따지는 건 그다음이다.']],
+   doc:['국방부 협조 공문','라자루스 사업은 국가 안보 최우선 과제로 분류됨.\n사고 발생 시 해림시 전역을 봉쇄하고, 관련 기록과 증인 일체를 "정화"할 것.\n\n※ 본 문서는 열람 후 즉시 파기.']},
+ { n:'공단 지대',
+   cut:['Y','공단 지대다. 헬기 연료를 확보하는 중이다. 조금만 더 버텨.'],
+   in:[['H','조심하세요. 여긴 산성을 뱉는 개체가 있어요. 화학 공장 근처에서 변이한 것 같아요.']],
+   mid:[['Y','…본부에서 연락이 왔다. 이상하군. 내 구조 요청은 무시하고, "정화 작전" 시각만 확인하고 끊었어.']],
+   near:[['H','정화 작전…? 그건 공문에 있던… 아니길 바라요.']],
+   doc:['공장 작업자의 메모','배가 부풀어 오른 놈들은 가까이서 쏘지 마.\n멀리서만 쏴. 터지면 옆에 있던 것들까지 다 날아간다.\n김 반장이 그렇게 갔다.']},
+ { n:'고가도로 아래',
+   cut:['Y','고가도로 아래다. 무장한 놈들이 무리를 지어 다닌다.'],
+   in:[['Y','솔직히 말하지. 새벽 다섯 시, 이 도시는 폭격된다. 정화 작전… 생존자까지 전부 묻어 버리겠다는 거다.'],['H','그래서 새벽이 마감이었군요…']],
+   mid:[['H','윤 중사님, 저 지금 고가도로 위예요. 놈들이… 너무 많아요. 무전기를 끌게요. 소리를 내면 안 돼요.'],['S','…치직…']],
+   near:[['Y','박사! 대답해! …젠장. 넌 계속 가라. 멈추면 안 된다.']],
+   doc:['한서연의 음성 메모','"혹시 제가 끝까지 못 가면, 이 녹음을 들은 분께 부탁할게요.\n라자루스 0호는 아직 살아 있어요. 연구소가 처음 만든 개체…\n그리고, 제 동생이에요."']},
+ { n:'군 검문소',
+   cut:['Y','마지막 검문소 직전이다. 여기 있던 군인들도… 전부 당했다.'],
+   in:[['S','…치직… 들리세요…? 저예요.'],['H','살았어요. 지하도를 타고 헬기장 쪽으로 먼저 왔어요. 그런데… 그 애가 여기 있어요. 헬기장 한가운데에.']],
+   mid:[['H','0호는 다른 개체들을 부를 수 있어요. 그 애가 울부짖으면 주변 것들이 몰려와요.'],['Y','박사, 그게 동생이라면… 각오는 됐나?']],
+   near:[['H','…그 애는 3년 전에 이미 죽었어요. 저건 연구소가 만든 껍데기예요. 끝내 주세요.']],
+   doc:['검문소 근무일지','23:40 상부 지시 — 격리선에 접근하는 민간인 전원 사격.\n00:15 민간인 아님. 감염자.\n00:50 탄약 부족.\n01:10 박 일병 물림.\n01:30 (기록 없음)']},
+ { n:'북쪽 헬기장',
+   cut:['H','저게… 라자루스 0호예요. 망자의 왕. 저걸 쓰러뜨리지 않으면 헬기가 내려올 수 없어요!'],
+   in:[['Y','헬기는 상공에서 대기 중이다. 새벽까지 30분. 반쯤 쓰러뜨리면 더 사나워질 거다. 끝까지 버텨!']],
+   mid:[['H','조금만 더…! 미안해, 수호야. 이제 그만 쉬어.']],
+   after:[['Y','놈이 쓰러졌다! 신호탄 옆으로 와라. 지금 내려간다!']],
+   doc:['라자루스 실험 기록 — 0호','피험자 0호. 한수호, 19세. 교통사고로 뇌사 판정.\n보호자 동의 없이 투여됨.\n\n담당 연구원: 한서연 (피험자의 누나).\n※ 본 사실은 담당 연구원에게 알리지 말 것.']}
 ];
 /* ---------- 보스 (5단계마다) ---------- */
 const BOSS_NAMES = ['도살자', '역병술사', '망자의 군주'];
@@ -1759,7 +1852,8 @@ function bossDown(e){
   const x = e.g.position.x, z = e.g.position.z;
   G.score += 1500*e.bs.tier; bossFxClear(); stat('boss');
   dropItem('med', x + 1, z); dropItem('ammo', x - 1, z); dropItem('ammo', x, z + 1); dropItem('speed', x, z - 1);
-  banner('보스 처치<small>' + e.bs.name + ' 격파 · 출구가 열렸다</small>', 3); sfx.wave(); toast('+' + (1500*e.bs.tier + e.def.score).toLocaleString() + '점 · 출구로 가세요', 3.5);
+  banner('보스 처치<small>' + e.bs.name + ' 격파 · 출구가 열렸다</small>', 3);
+  if (G.mode === 'story' && STORY[G.stage - 1] && STORY[G.stage - 1].after) radioSeq(STORY[G.stage - 1].after, 1.5); sfx.wave(); toast('+' + (1500*e.bs.tier + e.def.score).toLocaleString() + '점 · 출구로 가세요', 3.5);
 }
 
 const fadeEl = $('fade');
@@ -1915,11 +2009,11 @@ function reset(){
   Object.assign(G, { stage:0, score:0, kills:0, spawnT:3, stageTime:0, totalTime:0, time:0, groanT:3 });
   for (const b of bullets){ b.life = 0; b.m.visible = false; }
   bossFxClear();
-  clearTimeout(radioTimer); radioEl.classList.remove('show'); radioT = 0;
+  clearTimeout(radioTimer); radioEl.classList.remove('show'); radioT = 0; rq = [];
   if (typeof heliHide === 'function') heliHide();
   aim.x = aim.y = 0; firing = false; vig = 0;
 }
-function show(id){ for (const o of ['menu','pause','over','win','settings','ach']) $(o).classList.toggle('on', o === id); }
+function show(id){ for (const o of ['menu','pause','over','win','settings','ach','doc','arch']) $(o).classList.toggle('on', o === id); }
 function tryLock(){
   if (touchMode || fallback) return;
   try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(()=>{}); } catch(e){}
@@ -1987,7 +2081,7 @@ function liftAt(sh, u){ const f = u*LIFT_N, i = Math.min(LIFT_N - 1, Math.floor(
 function povLook(d){ return [P.x - Math.sin(P.yaw)*d, EYE, P.z - Math.cos(P.yaw)*d]; }
 function cut(shots, end){
   G.state = 'cutscene'; firing = false; aiming = false; show(null); $('hud').classList.remove('on');
-  hud.banner.classList.remove('show'); bannerT = 0; radioEl.classList.remove('show'); radioT = 0;
+  hud.banner.classList.remove('show'); bannerT = 0; radioEl.classList.remove('show'); radioT = 0; rq = [];
   cine.shots = shots; cine.i = 0; cine.t = 0; cine.end = end;
   cineEl.classList.add('on'); setTimeout(() => cineEl.classList.add('in'), 30);
   cineTtl.classList.remove('show'); cine.ttlT = 0;
@@ -2042,20 +2136,22 @@ function openingCut(){
   const c = L.n*CS/2, z0 = enemies.find(e => !e.dead) || null;
   const shots = [
     { d:5.2, fog:0.012, free:true, ttl:'망자의 <em style="font-style:normal;color:var(--blood)">밤</em><small>해림 격리구역</small>',
-      txt:'11월의 밤, 해안 도시 해림. 감염이 퍼진 지 사흘 만에 군은 도시 전체를 장벽으로 봉쇄했다.',
+      txt:'11월, 해안 도시 해림. 북쪽 생명공학연구소에서 경보가 울린 지 사흘. 군은 도시 전체를 장벽으로 봉쇄했다.',
       cam:k => { const a = 0.6 + k*0.5; return [c + Math.sin(a)*c*1.1, mix(44, 34, k), c + Math.cos(a)*c*1.1, c, 0, c]; } },
-    { d:4.4, fog:0.02, txt:'골목과 장벽이 뒤엉킨 격리구역은 이제 하나의 거대한 미로다. 그리고 그 안엔 죽은 자들이 걷는다.',
+    { d:4.8, fog:0.02, txt:'골목과 장벽이 뒤엉킨 격리구역은 거대한 미로가 됐다. 그리고 그 안엔, 죽은 자들이 걷는다.',
       cam:k => { const zx = z0 ? z0.g.position.x : c, zz = z0 ? z0.g.position.z : c;
         return [zx + mix(5, 3, k), mix(6.5, 4.6, k), zz + mix(5, 2.6, k), zx, 1.1, zz]; } },
-    goalShot(4.6, '', '…생존자 있나? 구조대 윤 중사다. 출구마다 초록 신호탄을 올려 두겠다.', '📻 무전 · 윤 중사', 2.2),
-    descendShot(4.6, '봉쇄선 열 개를 넘어 북쪽 헬기장까지 와라. 새벽이 오면 헬기는 떠난다. 행운을 빈다.', '📻 무전 · 윤 중사')
+    { d:4.2, fog:0.02, free:true, txt:'무너진 지하 대피소. 당신은 홀로 눈을 떴다. 손에 남은 건 칼 한 자루와 권총, 그리고 돌격소총 하나.',
+      cam:k => [P.x + 0.6, mix(1.2, 2.2, k), P.z + 0.6, P.x - Math.sin(P.yaw)*3, mix(0.4, 1.4, k), P.z - Math.cos(P.yaw)*3] },
+    goalShot(4.8, '', '…들리나? 생존자 신호가 잡혔다. 구조대 윤태호 중사다. 출구마다 초록 신호탄을 올려 두겠다.', WHO.Y, 2.2),
+    descendShot(5, '봉쇄선 열 개를 넘어 북쪽 헬기장까지 와라. 새벽이 오면… 이 도시엔 아무것도 남지 않는다.', WHO.Y)
   ];
   sfx.thunder && sfx.thunder();
   cut(shots, () => toPlay(1));
 }
 function stageCut(s){
   const st = STORY[s - 1], fin = s === FINAL;
-  const ttl = (fin ? '최종 봉쇄선' : '봉쇄선 ' + s + ' / ' + FINAL) + '<small>' + st[0] + '</small>';
+  const ttl = (fin ? '최종 봉쇄선' : '봉쇄선 ' + s + ' / ' + FINAL) + '<small>' + st.n + '</small>';
   const brute = enemies.find(e => e.type === 'brute');
   const shots = [goalShot(G.boss ? 4.2 : 3.2, G.boss ? ttl.replace('<small>', '<small>보스 · ' + G.boss.bs.name + ' — ') : ttl,
     G.boss ? '⚠ ' + G.boss.bs.name + ' — 쓰러뜨리기 전엔 출구가 열리지 않는다.' : brute ? '출구를 거대한 놈이 지키고 있다.' : '저 초록 빛이 출구다.', '', Math.random()*6, G.boss ? G.boss.g.position : null)];
@@ -2072,8 +2168,8 @@ function stageCut(s){
         go:() => sfx.aim(1), done:() => { gn.laser.visible = false; } });
     }
   }
-  shots.push(descendShot(2.6, st[1], '📻 무전 · 윤 중사'));
-  cut(shots, () => { last = performance.now(); play(); if (s === 1) hint(); });
+  shots.push(descendShot(Math.max(3, 1.4 + st.cut[1].length/30), st.cut[1], WHO[st.cut[0]]));
+  cut(shots, () => { last = performance.now(); play(); if (s === 1) hint(); radioSeq(st.in, 1.2); });
 }
 // 엔딩: 헬기
 let heli = null;
@@ -2113,17 +2209,17 @@ function endingCut(){
   const gx = L.goal.x, gz = L.goal.z, sx = gx + 46, sz = gz + 30, yaw0 = Math.atan2(gx - sx, gz - sz);
   const lift = { x:gx, z:gz };
   const shots = [
-    { d:5.0, who:'📻 무전 · 윤 중사', txt:'보인다! 신호탄 옆에서 기다려라. 지금 내려간다!',
+    { d:5.0, who:WHO.Y, txt:'보인다! 신호탄 옆에서 기다려라. 지금 내려간다!',
       cam:k => [P.x, EYE, P.z, mix(sx, gx, Math.min(1, k*1.15)), mix(26, 8, k), mix(sz, gz, Math.min(1, k*1.15))],
       tick:(dt, k) => heliAt(mix(sx, gx, k), mix(26, 7.5, k), mix(sz, gz, k), yaw0, dt) },
-    { d:4.0, txt:'사다리가 내려온다. 손을 뻗었다.',
+    { d:5.4, txt:'사다리를 잡자 누군가 당신의 손을 끌어올렸다. 피투성이가 된 한서연 박사가 작은 저장장치를 쥐고 있었다.',
       cam:k => [mix(P.x, gx - 0.6, k), mix(EYE, 6.3, k), mix(P.z, gz - 0.4, k), gx + Math.sin(yaw0)*1.2, mix(7.6, 6.6, k), gz + Math.cos(yaw0)*1.2],
       tick:dt => heliAt(gx, 7.5, gz, yaw0, dt) },
-    { d:6.0, fog:0.009, free:true, txt:'헬기가 장벽 위로 떠오른다. 아래로는 불 꺼진 도시가 끝없는 미로처럼 펼쳐져 있다.',
+    { d:6.0, fog:0.009, free:true, txt:'헬기가 장벽 위로 떠오른다. 동쪽 하늘이 밝아 오고, 멀리서 폭격기의 굉음이 다가온다.',
       cam:k => { const hx = mix(gx, gx - 30, k*k), hz = mix(gz, gz - 22, k*k), hy = mix(7.5, 34, k);
         return [hx + 2.5, hy - 1.2, hz + 2.5, hx + mix(6, 14, k), 0, hz + mix(6, 14, k)]; },
       tick:(dt, k) => heliAt(mix(gx, gx - 30, k*k), mix(7.5, 34, k), mix(gz, gz - 22, k*k), yaw0 + k*0.6, dt) },
-    { d:4.2, fog:0.008, free:true, who:'📻 윤 중사', txt:'살아 나왔군. 열 개의 봉쇄선을 혼자 뚫은 건 당신이 처음이야.',
+    { d:5.6, fog:0.008, free:true, who:'한서연 박사', txt:'이 안에 전부 있어요. 라자루스도, 정화 작전도. 해림에서 무슨 일이 있었는지… 이제 세상이 알게 될 거예요.',
       cam:k => { const c = L.n*CS/2; return [gx - 30 + Math.sin(k)*6, mix(40, 52, k), gz - 22, c, 0, c]; },
       tick:(dt, k) => heliAt(gx - 30 - k*18, 36 + k*6, gz - 22 - k*12, yaw0 + 0.6, dt) }
   ];
@@ -2152,7 +2248,8 @@ const ACH = [
   ['escHell', '😈', '지옥에서 돌아온 자', '지옥 난이도에서 스토리 클리어'],
   ['speed',   '⏱️', '스피드런',        '스토리를 15분 안에 클리어'],
   ['e10',     '♾️', '생존자',          '무한 모드 10단계 도달'],
-  ['e20',     '🌑', '끝나지 않는 밤',    '무한 모드 20단계 도달']
+  ['e20',     '🌑', '끝나지 않는 밤',    '무한 모드 20단계 도달'],
+  ['docs',    '📄', '진실의 조각',      '스토리 기록 문서 10개 모두 수집']
 ];
 const AS = { u:{}, s:{ kills:0, heads:0, knife:0, shield:0, boss:0, stun:0 } };
 try { const v = JSON.parse(localStorage.getItem('deadnight_ach') || 'null'); if (v){ Object.assign(AS.u, v.u || {}); Object.assign(AS.s, v.s || {}); } } catch(e){}
@@ -2187,6 +2284,48 @@ function closeAch(){ achOpen = false; show(achFrom); }
 $('achBtnMenu').addEventListener('click', () => openAch('menu'));
 $('achBtnPause').addEventListener('click', () => openAch('pause'));
 $('achClose').addEventListener('click', closeAch);
+
+/* ---------- 기록 문서 (스토리 단계마다 1개) ---------- */
+let DOCS = []; try { DOCS = JSON.parse(localStorage.getItem('deadnight_docs') || '[]') || []; } catch(e){}
+const paperM = new THREE.MeshBasicMaterial({ color:0xf4eed8 }), docGlowM = new THREE.MeshBasicMaterial({ color:0xbfe0ff, transparent:true, opacity:0.18, depthWrite:false, fog:false, blending:THREE.AdditiveBlending });
+function spawnDoc(s){
+  if (DOCS.includes(s)) return;
+  const n = L.n, cand = [];
+  for (let z=1; z<n-1; z++) for (let x=1; x<n-1; x++){
+    if (L.grid[z*n+x] || (x === L.goal.cx && z === L.goal.cz)) continue;
+    const fd = L.field[z*n+x]; if (fd < 5) continue;
+    const w = DIRS.filter(a => solid(x+a[0], z+a[1])).length;
+    if (w >= 3 || L.arena) cand.push({ x:(x+0.5)*CS, z:(z+0.5)*CS, w }); }
+  const ends = cand.filter(c => c.w >= 3), pool = ends.length ? ends : cand;
+  const c = pool.length ? pool[Math.floor(Math.random()*pool.length)] : pickCell(5, 999); if (!c) return;
+  dropItem('doc', c.x, c.z); pickups[pickups.length - 1].doc = s;
+}
+let docFrom = 'play';
+function readDoc(s, fresh){
+  const d = STORY[s - 1].doc;
+  $('docNo').textContent = '기록 #' + s + ' · ' + STORY[s - 1].n; $('docTitle').textContent = d[0]; $('docBody').textContent = d[1];
+  $('docSt').textContent = fresh ? '기록 보관함에 저장됨 · ' + DOCS.length + ' / ' + STORY.length : '';
+}
+function takeDoc(s){
+  if (!DOCS.includes(s)){ DOCS.push(s); DOCS.sort((a, b) => a - b); try { localStorage.setItem('deadnight_docs', JSON.stringify(DOCS)); } catch(e){} }
+  if (DOCS.length >= STORY.length) unlock('docs');
+  G.state = 'doc'; firing = false; aiming = false;
+  if (document.pointerLockElement === canvas) document.exitPointerLock();
+  readDoc(s, true); show('doc'); sfx.radio();
+}
+function closeDoc(){ if (G.state !== 'doc') return; initAudio(); last = performance.now(); play(); }
+$('docClose').addEventListener('click', closeDoc);
+let archOpen = false;
+function openArch(){ archOpen = true;
+  $('archSum').textContent = '찾은 기록 ' + DOCS.length + ' / ' + STORY.length + ' · 스토리 모드의 각 단계 미로 구석에 하나씩 숨겨져 있습니다';
+  $('archList').innerHTML = STORY.map((st, i) => { const k = i + 1;
+    if (!DOCS.includes(k)) return '<div class="lock">기록 #' + k + ' · ??? — ' + k + '단계 「' + st.n + '」 어딘가에 있다</div>';
+    const esc = t => t.replace(/[&<>]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' })[c]);
+    return '<div class="paper"><div class="no">기록 #' + k + ' · ' + st.n + '</div><h2>' + esc(st.doc[0]) + '</h2><div class="bd">' + esc(st.doc[1]) + '</div></div>'; }).join('');
+  show('arch'); }
+function closeArch(){ archOpen = false; show('menu'); }
+$('archBtn').addEventListener('click', openArch);
+$('archClose').addEventListener('click', closeArch);
 
 /* ---------- 체크포인트 (스토리 5단계마다) ---------- */
 const cpKey = () => 'deadnight_cp' + (diff === 'normal' ? '' : '_' + diff);
@@ -2350,6 +2489,8 @@ canvas.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('keydown', e => {
   if (ST.open){ if (e.code === 'Escape' && !ST.lock) closeSettings(); return; }
   if (achOpen){ if (e.code === 'Escape') closeAch(); return; }
+  if (archOpen){ if (e.code === 'Escape') closeArch(); return; }
+  if (G.state === 'doc'){ if (['Enter','Space','KeyE','Escape'].includes(e.code)){ e.preventDefault && e.preventDefault(); closeDoc(); } return; }
   keys[e.code] = true;
   if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
   if (e.code === 'KeyR' && G.state === 'playing') reload();
@@ -2496,6 +2637,12 @@ function update(dt){
 
   // 스테이지 진행
   G.stageTime += dt; G.totalTime += dt; updateField();
+  if (G.mode === 'story' && STORY[G.stage - 1]){ const st = STORY[G.stage - 1];
+    if (!G.midDone){ let f = false;
+      if (G.boss) f = G.boss.bs.phase >= 2;
+      else if (!isBossStage(G.stage)){ const gd = L.field[L.goal.cz*L.n + L.goal.cx]; f = G.goalD0 > 2 && gd >= 0 && gd <= G.goalD0*0.5; }
+      if (f){ G.midDone = true; radioMore(st.mid); } }
+    if (!G.nearDone && st.near && !G.boss && Math.hypot(P.x - L.goal.x, P.z - L.goal.z) < 13){ G.nearDone = true; radioMore(st.near); } }
   if (P.hp < G.hp0 - 0.001) G.hurt = true; G.hp0 = P.hp;
   if (updateBullets(dt)) return;
   if (updateBossFx(dt)) return;
@@ -2616,6 +2763,7 @@ function update(dt){
     let took = false;
     if (near && p.kind === 'med' && P.hp < 100){ P.hp = Math.min(100, P.hp + 30); toast('체력 +30', 1.5); took = true; }
     else if (near && p.kind === 'speed'){ P.speedT = SPEED_DUR; toast('스피드업! ' + SPEED_DUR + '초', 1.8); took = true; sfx.speedup(); }
+    else if (near && p.kind === 'doc'){ scene.remove(p.g); pickups.splice(i,1); sfx.pickup(); takeDoc(p.doc); return; }
     else if (near && p.kind === 'ammo'){ for (const x of WEAPONS) if (!x.melee && isFinite(x.res0)) x.res = Math.min(x.res0*3, x.res + x.box); toast('탄약 획득', 1.5); took = true; }
     if (took) sfx.pickup();
     if (took || p.life <= 0){ scene.remove(p.g); pickups.splice(i,1); } }
@@ -2631,7 +2779,8 @@ function update(dt){
   if (hitT > 0){ hitT -= dt; if (hitT <= 0) hud.hit.classList.remove('show'); }
   if (bannerT > 0){ bannerT -= dt; if (bannerT <= 0) hud.banner.classList.remove('show'); }
   if (toastT > 0){ toastT -= dt; if (toastT <= 0) hud.toast.classList.remove('show'); }
-  if (radioT > 0){ radioT -= dt; if (radioT <= 0) radioEl.classList.remove('show'); }
+  if (radioT > 0){ radioT -= dt; if (radioT <= 0){ radioT = 0; radioEl.classList.remove('show'); } }
+  if (rq.length && radioT <= 0){ rqT -= dt; if (rqT <= 0){ radioLine(rq.shift()); rqT = 0.45; } }
   vig = Math.max(0, vig - dt*1.6); hud.vig.style.opacity = vig.toFixed(2);
   hud.low.style.opacity = P.hp < 35 ? (0.35 + 0.3*Math.sin(G.time*5)) * (1 - P.hp/35) + 0.25 : 0;
   if (!touchMode){ hud.cross.style.left = ((aim.x+1)*50) + '%'; hud.cross.style.top = ((1-aim.y)*50) + '%'; }
