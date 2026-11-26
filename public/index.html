@@ -142,6 +142,28 @@
   .lnk { background:none; border:1px solid rgba(233,228,212,.28); color:var(--bone); font-size:13px; letter-spacing:.08em; padding:7px 16px; border-radius:3px; cursor:pointer; margin-top:14px; }
   .lnk:hover { border-color:var(--toxic); color:var(--toxic); }
   #settings .box { max-width:min(980px,94vw); }
+  #ach .box { max-width:min(900px,94vw); }
+  .ach-sum { font-size:14px; opacity:.75; margin-top:6px; }
+  .ach-sum b { color:#ffcf4a; }
+  .ach-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:10px; margin:16px 0 18px; max-height:56vh; overflow-y:auto; text-align:left; padding-right:4px; }
+  .ach-it { display:flex; gap:12px; align-items:center; padding:10px 12px; border:1px solid rgba(233,228,212,.14); border-radius:4px; background:rgba(233,228,212,.04); }
+  .ach-it .ic { font-size:26px; width:34px; text-align:center; filter:grayscale(1) brightness(.6); }
+  .ach-it .tx { flex:1; min-width:0; }
+  .ach-it .nm { font-family:"Black Han Sans",system-ui,sans-serif; font-size:16px; opacity:.55; }
+  .ach-it .ds { font-size:12px; opacity:.55; line-height:1.4; margin-top:2px; }
+  .ach-it .pg { height:4px; background:rgba(233,228,212,.12); border-radius:2px; margin-top:6px; overflow:hidden; }
+  .ach-it .pg i { display:block; height:100%; background:#8a7a50; }
+  .ach-it .pn { font-size:11px; opacity:.5; margin-top:3px; }
+  .ach-it.on { border-color:rgba(255,207,74,.5); background:rgba(255,207,74,.07); }
+  .ach-it.on .ic { filter:none; } .ach-it.on .nm { opacity:1; color:#ffcf4a; } .ach-it.on .ds { opacity:.8; }
+  .ach-it .dt { font-size:11px; color:#ffcf4a; opacity:.7; margin-top:3px; }
+  #achPop { position:fixed; right:18px; top:18px; z-index:60; display:flex; gap:12px; align-items:center; padding:10px 16px 10px 12px; min-width:250px;
+    background:linear-gradient(180deg,rgba(40,32,10,.94),rgba(18,14,6,.94)); border:1px solid rgba(255,207,74,.6); border-radius:4px; box-shadow:0 0 24px rgba(255,190,60,.35);
+    transform:translateX(120%); transition:transform .45s cubic-bezier(.2,.9,.3,1.2); pointer-events:none; }
+  #achPop.show { transform:none; }
+  #achPop .ic { font-size:30px; } #achPop small { display:block; font-size:11px; letter-spacing:.2em; color:#ffcf4a; } #achPop b { font-family:"Black Han Sans",system-ui,sans-serif; font-weight:400; font-size:18px; }
+  body.touch #achPop { top:calc(8px + env(safe-area-inset-top, 0px)); right:calc(8px + env(safe-area-inset-right, 0px)); min-width:0; padding:6px 10px; } body.touch #achPop b { font-size:14px; } body.touch #achPop .ic { font-size:22px; }
+  body.touch .ach-list { max-height:none; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); }
   .set-wrap { display:flex; gap:26px; align-items:stretch; justify-content:center; margin-top:18px; flex-wrap:wrap; text-align:left; }
   .set-ctl { flex:1 1 260px; max-width:340px; display:flex; flex-direction:column; gap:12px; }
   .set-ctl label { font-size:12px; letter-spacing:.2em; opacity:.7; }
@@ -322,7 +344,7 @@
     <div class="diff" id="diffSel"><span>난이도</span><button type="button" data-d="veasy">매우 쉬움</button><button type="button" data-d="easy">쉬움</button><button type="button" data-d="normal">중간</button><button type="button" data-d="hard">어려움</button><button type="button" data-d="hell">지옥</button></div>
     <p class="diff-note" id="diffNote"></p>
     <p class="best" id="bestMenu"></p>
-    <button type="button" class="lnk" id="setBtnMenu">⚙ 감도 설정</button>
+    <button type="button" class="lnk" id="setBtnMenu">⚙ 감도 설정</button> <button type="button" class="lnk" id="achBtnMenu">🏆 업적</button>
   </div>
 </div>
 
@@ -333,9 +355,19 @@
       <button class="btn display" id="resumeBtn">계속하기</button>
       <button class="btn display alt" id="quitBtn">메인으로</button>
     </div>
-    <button type="button" class="lnk" id="setBtnPause">⚙ 감도 설정</button>
+    <button type="button" class="lnk" id="setBtnPause">⚙ 감도 설정</button> <button type="button" class="lnk" id="achBtnPause">🏆 업적</button>
   </div>
 </div>
+
+<div id="ach" class="overlay">
+  <div class="box">
+    <h1 class="display" style="font-size:clamp(34px,6vw,58px)">업적</h1>
+    <p class="ach-sum" id="achSum"></p>
+    <div class="ach-list" id="achList"></div>
+    <button class="btn display sm" id="achClose">닫기</button>
+  </div>
+</div>
+<div id="achPop"><span class="ic" id="achPopI">🏆</span><span><small>업적 달성</small><b id="achPopN"></b></span></div>
 
 <div id="settings" class="overlay">
   <div class="box">
@@ -1258,6 +1290,11 @@ const fireballs = []; for (let i=0;i<5;i++){ const m = new THREE.Mesh(SPH, fireM
 const BOOM_R = 3.8;
 function boom(e){
   if (e.boomed) return; e.boomed = true;
+  const top = !G.boomDepth; if (top) G.boomK = 0; G.boomDepth = (G.boomDepth || 0) + 1;
+  try { boomInner(e); } finally { G.boomDepth--; }
+  if (top && G.boomK >= 3) unlock('chain');
+}
+function boomInner(e){
   const x = e.g.position.x, z = e.g.position.z;
   if (!e.dead){ e.dead = true; e.deadT = 0; e.blob.visible = false; decal(x, z, 1.3); }
   e.gone = true; e.deadT = Math.max(e.deadT, 3.2);
@@ -1270,7 +1307,7 @@ function boom(e){
   else if (pd < 16) P.shake = Math.max(P.shake, 0.1*(1 - pd/16));
   for (const o of enemies){ if (o === e || o.dead) continue;
     const od = Math.hypot(o.g.position.x - x, o.g.position.z - z);
-    if (od < BOOM_R) damage(o, false, { x:o.g.position.x, y:1.2, z:o.g.position.z }, (o.boss ? 120 : 150)*(1 - od/BOOM_R*0.4), true); }
+    if (od < BOOM_R){ damage(o, false, { x:o.g.position.x, y:1.2, z:o.g.position.z }, (o.boss ? 120 : 150)*(1 - od/BOOM_R*0.4), true); } }
 }
 function spit(e){
   const q = globs.find(o => !o.on); if (!q) return;
@@ -1350,7 +1387,7 @@ function totalAmmo(){ let n = 0; for (const w of WEAPONS) if (!w.melee && isFini
 const EYE = 1.7;
 for (const w of WEAPONS) if (!w.melee){ w.cur = w.mag; w.res = w.res0; }
 const P = { x:0, z:0, yaw:0, pitch:0, hp:100, w:2, reloading:0, fireCd:0, recoil:0, bob:0, shake:0, switchT:0, swing:0, ads:0, swx:0, swy:0, gap:7, stepN:0, speedT:0, spf:0 };
-const G = { pvx:0, pvz:0, seen:{}, state:'menu', mode:'story', stage:0, score:0, kills:0, spawnT:0, stageTime:0, totalTime:0, time:0, groanT:2 };
+const G = { used:{}, hurt:false, hp0:100, pvx:0, pvz:0, seen:{}, state:'menu', mode:'story', stage:0, score:0, kills:0, spawnT:0, stageTime:0, totalTime:0, time:0, groanT:2 };
 const FINAL = 10;
 const aim = { x:0, y:0 };
 const keys = {};
@@ -1464,7 +1501,8 @@ function startStage(s, quiet){
   for (const a of DIRS){ if (solid(1+a[0], 1+a[1])) continue; const v = gd[(1+a[1])*L.n + 1+a[0]]; if (v >= 0 && v < bd){ bd = v; fx = a[0]; fz = a[1]; } }
   P.yaw = Math.atan2(-fx, -fz);
   updateField();
-  bossFxClear(); G.lockMsg = 0;
+  bossFxClear(); G.lockMsg = 0; G.used = {}; G.hurt = false; G.hp0 = P.hp;
+  if (G.state !== 'menu'){ if (G.mode === 'story' && s >= 5) unlock('cp'); if (G.mode === 'endless'){ if (s >= 10) unlock('e10'); if (s >= 20) unlock('e20'); } }
   const bossSt = isBossStage(s);
   const pre = Math.max(2, Math.round(Math.min(COARSE ? 18 : 30, s <= 6 ? [3,6,9,14,20,26][s-1] : 6 + s*4) * D.cnt * (bossSt ? 0.45 : 1)));
   for (let i=0; i<pre; i++){ const c = pickCell(4, 999); if (c) spawnAt(randType(s), c); }
@@ -1643,7 +1681,7 @@ function updateBoss(e, dt, dx, dz, d){
       sp = v; moving = true;
       const nx = g.position.x + b.dir[0]*step, nz = g.position.z + b.dir[1]*step;
       if (solid(Math.floor((nx + b.dir[0]*(R0 + 0.2))/CS), Math.floor((nz + b.dir[1]*(R0 + 0.2))/CS))){
-        bossSet(e, 'stun', [0, 2.6, 2.2, 1.7][b.phase]); P.shake = Math.max(P.shake, 0.14); noise(0.4, 400, 60, 0.8);
+        bossSet(e, 'stun', [0, 2.6, 2.2, 1.7][b.phase]); stat('stun'); P.shake = Math.max(P.shake, 0.14); noise(0.4, 400, 60, 0.8);
         burst({ x:nx, y:1.5, z:nz }, 16, sparkM, 5); toast('벽에 부딪혀 기절! 약점 노출 — 지금 공격!', 2.2); break; }
       g.position.x = nx; g.position.z = nz; collide(g.position, R0); b.go += step;
       if (!b.hit && Math.hypot(P.x - g.position.x, P.z - g.position.z) < R0 + 0.4){
@@ -1719,13 +1757,16 @@ function updateBossFx(dt){
 function bossDmgMul(e){ const st = e.bs.st; return st === 'rage' ? 0 : st === 'stun' ? 2.5 : st === 'howl' ? 1.6 : 1; }
 function bossDown(e){
   const x = e.g.position.x, z = e.g.position.z;
-  G.score += 1500*e.bs.tier; bossFxClear();
+  G.score += 1500*e.bs.tier; bossFxClear(); stat('boss');
   dropItem('med', x + 1, z); dropItem('ammo', x - 1, z); dropItem('ammo', x, z + 1); dropItem('speed', x, z - 1);
   banner('보스 처치<small>' + e.bs.name + ' 격파 · 출구가 열렸다</small>', 3); sfx.wave(); toast('+' + (1500*e.bs.tier + e.def.score).toLocaleString() + '점 · 출구로 가세요', 3.5);
 }
 
 const fadeEl = $('fade');
 function clearStage(){
+  if (!G.hurt) unlock('clean');
+  if (G.used.pistol && !G.used.rifle && !G.used.knife) unlock('pistol');
+  if (P.hp <= 10) unlock('clutch');
   const bonus = 100*G.stage + Math.max(0, Math.round((90 - G.stageTime)*2));
   G.score += bonus; P.hp = Math.min(100, P.hp + 15); sfx.pickup();
   if (G.mode === 'story' && G.stage >= FINAL){ endingCut(); return; }
@@ -1788,10 +1829,10 @@ function shoot(){
   if (lockMode) P.pitch = Math.min(1.45, P.pitch + 0.004 + 0.014*w.kick);
   muzzleFlash.visible = true; muzzleFlash.material.rotation = Math.random()*6; muzzleFlash.scale.setScalar((0.26 + Math.random()*0.2)*(0.8 + w.kick*0.6));
   muzzleLight.intensity = 2.6; flashT = 0.05; ejectShell();
-  (sfx[w.id] || sfx.shot)();
+  (sfx[w.id] || sfx.shot)(); G.used[w.id] = 1;
 }
 function melee(w){
-  P.fireCd = 1 / w.rate; P.swing = 1; sfx.swish();
+  P.fireCd = 1 / w.rate; P.swing = 1; sfx.swish(); G.used.knife = 1;
   const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw), cand = [];
   for (const e of enemies){ if (e.dead) continue;
     const dx = e.g.position.x - P.x, dz = e.g.position.z - P.z, d = Math.hypot(dx, dz) || 0.001;
@@ -1837,6 +1878,7 @@ function damage(e, head, point, base, boomSrc){
     if (e.hp > 0) return; base = 0; }
   if (e.boss){ const k = bossDmgMul(e); if (k === 0){ burst(point, 4, sparkM, 3); dmgNum(point, '무적', 'imm'); sfx.hit(); return; } base *= k; weak = k > 1; }
   const dmg = base * (head ? 2 : 1) * (0.9 + Math.random()*0.2);
+  if (head && !boomSrc) stat('heads');
   e.hp -= dmg; dmgNum(point, String(Math.max(1, Math.round(dmg))), (e.hp <= 0 ? 'kill' : weak ? 'weak' : '') + (head ? ' head' : ''));
   e.flash = 0.09; e.stagger = e.type === 'brute' ? 0.05 : 0.18;
   burst(point, head ? 12 : 6, bloodM, head ? 4.5 : 3); mist(point, head ? 1.4 : 1);
@@ -1844,6 +1886,9 @@ function damage(e, head, point, base, boomSrc){
   if (e.hp <= 0){
     e.dead = true; e.deadT = 0; e.blob.visible = false; decal(e.g.position.x, e.g.position.z, e.def.scale);
     G.kills++; G.score += Math.round(e.def.score * (head ? 1.5 : 1));
+    stat('kills'); if (boomSrc) G.boomK = (G.boomK || 0) + 1;
+    else if (WEAPONS[P.w].melee) stat('knife');
+    if (e.type === 'shield') stat('shield');
     hud.hit.classList.add('kill'); hitT = 0.16;
     if (e.boss){ bossDown(e); head ? sfx.head() : sfx.hit(); return; }
     if (e.type === 'bomber') boom(e);
@@ -1874,7 +1919,7 @@ function reset(){
   if (typeof heliHide === 'function') heliHide();
   aim.x = aim.y = 0; firing = false; vig = 0;
 }
-function show(id){ for (const o of ['menu','pause','over','win','settings']) $(o).classList.toggle('on', o === id); }
+function show(id){ for (const o of ['menu','pause','over','win','settings','ach']) $(o).classList.toggle('on', o === id); }
 function tryLock(){
   if (touchMode || fallback) return;
   try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(()=>{}); } catch(e){}
@@ -2085,6 +2130,63 @@ function endingCut(){
   shots[shots.length-1].done = () => heliHide();
   cut(shots, () => { heliHide(); victory(); });
 }
+/* ---------- 업적 ---------- */
+const ACH = [
+  ['first',   '🩸', '첫 피',          '좀비 1마리 처치',                    'kills', 1],
+  ['k500',    '💀', '학살자',          '누적 500마리 처치',                  'kills', 500],
+  ['k2000',   '☠️', '망자 사냥꾼',      '누적 2,000마리 처치',                'kills', 2000],
+  ['h100',    '🎯', '명사수',          '헤드샷 누적 100회',                  'heads', 100],
+  ['h500',    '🔭', '저격의 신',        '헤드샷 누적 500회',                  'heads', 500],
+  ['knife',   '🔪', '칼잡이',          '칼로 50마리 처치',                   'knife', 50],
+  ['chain',   '🎆', '연쇄 폭발',        '폭발 한 번에 좀비 3마리 이상 처치'],
+  ['shield',  '🛡️', '방패 따위',        '방패 좀비 10마리 처치',              'shield', 10],
+  ['boss1',   '👹', '첫 보스',          '보스 처치',                          'boss', 1],
+  ['boss10',  '🏅', '보스 사냥꾼',      '보스 10회 처치',                     'boss', 10],
+  ['stun',    '💫', '투우사',          '보스를 벽에 박아 기절시키기 20회',   'stun', 20],
+  ['clean',   '✨', '무결점',          '피해를 한 번도 안 받고 단계 클리어'],
+  ['pistol',  '🔫', '권총 한 자루',      '권총만 써서 단계 클리어'],
+  ['clutch',  '❤️‍🩹', '구사일생',        '체력 10 이하로 단계 클리어'],
+  ['cp',      '🚩', '절반의 생존',      '스토리 5단계 도달'],
+  ['escape',  '🚁', '탈출',            '스토리 모드 클리어'],
+  ['escHard', '🔥', '불길을 넘어',      '어려움 이상에서 스토리 클리어'],
+  ['escHell', '😈', '지옥에서 돌아온 자', '지옥 난이도에서 스토리 클리어'],
+  ['speed',   '⏱️', '스피드런',        '스토리를 15분 안에 클리어'],
+  ['e10',     '♾️', '생존자',          '무한 모드 10단계 도달'],
+  ['e20',     '🌑', '끝나지 않는 밤',    '무한 모드 20단계 도달']
+];
+const AS = { u:{}, s:{ kills:0, heads:0, knife:0, shield:0, boss:0, stun:0 } };
+try { const v = JSON.parse(localStorage.getItem('deadnight_ach') || 'null'); if (v){ Object.assign(AS.u, v.u || {}); Object.assign(AS.s, v.s || {}); } } catch(e){}
+let achSaveT = 0;
+function achSave(){ try { localStorage.setItem('deadnight_ach', JSON.stringify(AS)); } catch(e){} }
+const achQ = []; let achPopT = 0;
+function unlock(id){
+  if (AS.u[id]) return; const a = ACH.find(x => x[0] === id); if (!a) return;
+  AS.u[id] = Date.now(); achSave(); achQ.push(a); sfx.pickup();
+}
+function stat(k, n){ AS.s[k] = (AS.s[k] || 0) + (n || 1);
+  for (const a of ACH) if (a[4] === k && AS.s[k] >= a[5]) unlock(a[0]);
+  achSaveT = 2; }
+function updateAch(dt){
+  if (achSaveT > 0){ achSaveT -= dt; if (achSaveT <= 0) achSave(); }
+  const el = $('achPop');
+  if (achPopT > 0){ achPopT -= dt; if (achPopT <= 0.45 && el.classList.contains('show')) el.classList.remove('show'); return; }
+  if (achQ.length){ const a = achQ.shift(); $('achPopI').textContent = a[1]; $('achPopN').textContent = a[2]; el.classList.add('show'); achPopT = 4; }
+}
+function achList(){
+  const n = ACH.filter(a => AS.u[a[0]]).length;
+  $('achSum').innerHTML = '<b>' + n + '</b> / ' + ACH.length + ' 달성 · 누적 처치 ' + (AS.s.kills || 0).toLocaleString() + ' · 헤드샷 ' + (AS.s.heads || 0).toLocaleString() + ' · 보스 ' + (AS.s.boss || 0);
+  $('achList').innerHTML = ACH.map(a => { const on = !!AS.u[a[0]];
+    let pg = '';
+    if (!on && a[4] && a[5] > 1){ const v = Math.min(a[5], AS.s[a[4]] || 0); pg = '<div class="pg"><i style="width:' + (v/a[5]*100).toFixed(1) + '%"></i></div><div class="pn">' + v.toLocaleString() + ' / ' + a[5].toLocaleString() + '</div>'; }
+    const dt = on ? '<div class="dt">' + new Date(AS.u[a[0]]).toLocaleDateString('ko-KR') + ' 달성</div>' : '';
+    return '<div class="ach-it' + (on ? ' on' : '') + '"><span class="ic">' + a[1] + '</span><div class="tx"><div class="nm">' + a[2] + '</div><div class="ds">' + a[3] + '</div>' + pg + dt + '</div></div>'; }).join('');
+}
+let achFrom = 'menu';
+function openAch(from){ achFrom = from; achList(); show('ach'); }
+$('achBtnMenu').addEventListener('click', () => openAch('menu'));
+$('achBtnPause').addEventListener('click', () => openAch('pause'));
+$('achClose').addEventListener('click', () => show(achFrom));
+
 /* ---------- 체크포인트 (스토리 5단계마다) ---------- */
 const cpKey = () => 'deadnight_cp' + (diff === 'normal' ? '' : '_' + diff);
 function getCp(){ try { const v = JSON.parse(localStorage.getItem(cpKey()) || 'null'); return v && v.s >= 2 ? v : null; } catch(e){ return null; } }
@@ -2100,6 +2202,7 @@ function fromCp(){ const cp = getCp(); if (!cp || !Z.ready) return;
   G.state = 'cutscene'; startStage(cp.s, true); stageCut(cp.s); }
 function fmtTime(t){ t = Math.round(t); return Math.floor(t/60) + ':' + String(t % 60).padStart(2, '0'); }
 function victory(){
+  unlock('escape'); if (diff === 'hard' || diff === 'hell') unlock('escHard'); if (diff === 'hell') unlock('escHell'); if (G.totalTime < 900) unlock('speed');
   G.state = 'win'; firing = false; aiming = false; scene.fog.density = FOG_D;
   if (document.pointerLockElement === canvas) document.exitPointerLock();
   clearCp(); saveBest(); cleared = true; try { localStorage.setItem('deadnight_cleared' + (diff === 'normal' ? '' : '_' + diff), '1'); } catch(e){}
@@ -2245,6 +2348,7 @@ document.addEventListener('wheel', e => { if (G.state !== 'playing') return; con
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('keydown', e => {
   if (ST.open){ if (e.code === 'Escape' && !ST.lock) closeSettings(); return; }
+  if ($('ach').classList.contains('on')){ if (e.code === 'Escape') show(achFrom); return; }
   keys[e.code] = true;
   if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
   if (e.code === 'KeyR' && G.state === 'playing') reload();
@@ -2391,6 +2495,7 @@ function update(dt){
 
   // 스테이지 진행
   G.stageTime += dt; G.totalTime += dt; updateField();
+  if (P.hp < G.hp0 - 0.001) G.hurt = true; G.hp0 = P.hp;
   if (updateBullets(dt)) return;
   if (updateBossFx(dt)) return;
   let alive = 0; for (const e of enemies) if (!e.dead) alive++;
@@ -2638,7 +2743,7 @@ function frame(now){
   gun.visible = G.state !== 'menu' && G.state !== 'cutscene' && G.state !== 'win' && !scoped;
   if (G.state !== 'playing'){ updateLamps(dt); if (G.state === 'menu') updateDust(dt); }
   updateRain(dt); updateLightning(dt);
-  render(dt); updateDmgNums(dt);
+  render(dt); updateDmgNums(dt); updateAch(dt);
 }
 requestAnimationFrame(frame);
 })();
