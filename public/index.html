@@ -6,7 +6,17 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0b1118">
-<title>망자의 밤 — 3D 좀비 슈팅</title>
+<title>데드 해림 (Dead Haerim) — 3D 좀비 슈팅 브라우저 게임</title>
+<meta name="description" content="데드 해림 (Dead Haerim) — 봉쇄된 도시 해림의 미로에서 좀비를 뚫고 탈출하는 3D 좀비 슈팅 게임. 설치 없이 브라우저에서 바로 플레이. 스토리 모드, 보스전, 무한 모드. A free 3D zombie survival shooter you can play in your browser.">
+<meta name="keywords" content="데드 해림, Dead Haerim, 좀비 게임, 좀비 슈팅, 3D 좀비 게임, 브라우저 게임, 웹 게임, zombie shooter, browser game">
+<meta property="og:type" content="website">
+<meta property="og:title" content="데드 해림 (Dead Haerim) — 3D 좀비 슈팅">
+<meta property="og:description" content="봉쇄된 도시의 미로를 뚫고 새벽이 오기 전에 탈출하라. 설치 없이 브라우저에서 바로 플레이하는 3D 좀비 슈팅 게임.">
+<meta property="og:image" content="https://zombi-vkjq.onrender.com/og-image.jpg">
+<meta property="og:url" content="https://zombi-vkjq.onrender.com/">
+<link rel="canonical" href="https://zombi-vkjq.onrender.com/">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Dead Haerim","alternateName":"데드 해림","description":"A 3D zombie survival shooter playable in the browser: escape the quarantined maze city of Haerim before dawn.","genre":["Shooter","Survival horror"],"gamePlatform":"Web browser","applicationCategory":"Game","operatingSystem":"Any","inLanguage":["en","ko"],"playMode":"SinglePlayer","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
 <style>
   :root { --blood:#c8102e; --bone:#e9e4d4; --ink:#0b1118; --toxic:#9be564; }
@@ -222,7 +232,8 @@
   .overlay.on { display:flex; overflow-y:auto; align-items:flex-start; }
   .box { max-width:560px; width:100%; margin:auto; }
   html[lang=en] #menu .box { max-width:680px; }
-  html[lang=en] #menu h1 { font-size:clamp(44px,7.4vw,80px); }
+  html[lang=en] #menu h1 { font-size:clamp(48px,8.6vw,96px); white-space:nowrap; }
+
   html[lang=en] #over h1, html[lang=en] #win h1 { font-size:clamp(46px,9vw,92px) !important; }
   h1 { font-size:clamp(52px,12vw,112px); line-height:.95; color:var(--bone);
     text-shadow:0 0 40px rgba(200,16,46,.7), 0 4px 0 #3a0610; }
@@ -355,7 +366,7 @@
 
 <div id="menu" class="overlay on">
   <div class="box">
-    <h1 class="display">망자의 <em>밤</em></h1>
+    <h1 class="display">데드 <em>해림</em></h1>
     <p class="sub">연구소의 실험이 도시를 삼켰다. 봉쇄선 10개를 넘어, 새벽이 오기 전에 탈출하라.</p>
     <div class="keys desk">
       <kbd>마우스</kbd><span>시점 이동 (조준선은 화면 중앙 고정) · 클릭(누르고 있으면 연사)으로 사격</span>
@@ -681,7 +692,7 @@ const I18N = {
   ' 헤드샷':" HEADSHOT",
   '마우스로 시점을 돌립니다 · 화면 끝에 닿으면 계속 회전합니다':"Move the mouse to look around · touching the screen edge keeps turning",
   '왼쪽 드래그 이동 · 오른쪽 드래그 시점 · 버튼으로 발사':"Drag left to move · drag right to look · buttons to shoot",
-  '망자의 <em style="font-style:normal;color:var(--blood)">밤</em><small>해림 격리구역</small>':"Night of the <em style=\"font-style:normal;color:var(--blood)\">Dead</em><small>Haerim Quarantine Zone</small>",
+  '데드 <em style="font-style:normal;color:var(--blood)">해림</em><small>해림 격리구역</small>':"Dead <em style=\"font-style:normal;color:var(--blood)\">Haerim</em><small>Haerim Quarantine Zone</small>",
   '11월, 해안 도시 해림. 북쪽 생명공학연구소에서 경보가 울린 지 사흘. 군은 도시 전체를 장벽으로 봉쇄했다.':"November. The coastal city of Haerim. Three days after the alarm sounded at the biotech institute up north, the army walled off the entire city.",
   '골목과 장벽이 뒤엉킨 격리구역은 거대한 미로가 됐다. 그리고 그 안엔, 죽은 자들이 걷는다.':"Tangled alleys and barricades turned the quarantine zone into a vast maze. And inside it, the dead walk.",
   '무너진 지하 대피소. 당신은 홀로 눈을 떴다. 손에 남은 건 칼 한 자루와 권총, 그리고 돌격소총 하나.':"A collapsed underground shelter. You wake up alone. All you have left: a knife, a pistol, and an assault rifle.",
@@ -808,15 +819,15 @@ const I18N_HTML = {
   "돌격소총":"Assault Rifle",
   "마우스":"Mouse",
   "마우스 감도":"Mouse sensitivity",
-  "망자의":"Night of the",
-  "망자의 밤 — 3D 좀비 슈팅":"Night of the Dead — 3D Zombie Shooter",
+  "데드":"Dead",
+  "데드 해림 (Dead Haerim) — 3D 좀비 슈팅 브라우저 게임":"Dead Haerim — 3D Zombie Shooter Browser Game",
   "매우 쉬움":"Very Easy",
   "메인으로":"Main Menu",
   "무기 교체 (칼 · 권총 · 돌격소총)":"Switch weapon (knife · pistol · rifle)",
   "무한 모드":"Endless Mode",
   "무한 모드 도전":"Try Endless Mode",
   "발사":"Fire",
-  "밤":"Dead",
+  "해림":"Haerim",
   "사흘 뒤, 한서연 박사가 가져온 자료가 세상에 공개되었다. 라자루스 프로젝트와 정화 작전의 책임자들은 하나둘 법정에 섰다.":"Three days later, the data Dr. Han Seo-yeon carried out was released to the world. One by one, those behind the Lazarus Project and Operation Cleanse stood trial.",
   "성공":"Escaped",
   "소리 끄기":"mute",
@@ -2543,7 +2554,7 @@ function goalShot(d, ttl, txt, who, a0, at){
 function openingCut(){
   const c = L.n*CS/2, z0 = enemies.find(e => !e.dead) || null;
   const shots = [
-    { d:5.2, fog:0.012, free:true, ttl:tr('망자의 <em style="font-style:normal;color:var(--blood)">밤</em><small>해림 격리구역</small>'),
+    { d:5.2, fog:0.012, free:true, ttl:tr('데드 <em style="font-style:normal;color:var(--blood)">해림</em><small>해림 격리구역</small>'),
       txt:tr('11월, 해안 도시 해림. 북쪽 생명공학연구소에서 경보가 울린 지 사흘. 군은 도시 전체를 장벽으로 봉쇄했다.'),
       cam:k => { const a = 0.6 + k*0.5; return [c + Math.sin(a)*c*1.1, mix(44, 34, k), c + Math.cos(a)*c*1.1, c, 0, c]; } },
     { d:4.8, fog:0.02, txt:tr('골목과 장벽이 뒤엉킨 격리구역은 거대한 미로가 됐다. 그리고 그 안엔, 죽은 자들이 걷는다.'),
