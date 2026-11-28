@@ -121,6 +121,18 @@
   #bossbar.inv .bar i { background:#555; }
   body.touch #bossbar { top:calc(36px + env(safe-area-inset-top, 0px)); width:46vw; }
   body.touch #bossbar .nm b { font-size:14px; } body.touch #bossbar .nm { font-size:11px; } body.touch #bossbar .bar { height:8px; }
+  #tut { position:absolute; left:50%; top:74px; transform:translate(-50%,-8px); min-width:min(520px,80vw); max-width:86vw; padding:12px 20px 12px; text-align:center;
+    border:1px solid rgba(77,255,136,.45); box-shadow:0 0 22px rgba(77,255,136,.18); opacity:0; transition:opacity .35s, transform .35s; pointer-events:none; }
+  #tut.show { opacity:1; transform:translate(-50%,0); }
+  #tut .st { font-size:11px; letter-spacing:.24em; color:var(--toxic); }
+  #tut .tx { font-family:"Black Han Sans",system-ui,sans-serif; font-size:24px; margin:4px 0 2px; }
+  #tut .sb { font-size:13px; opacity:.75; }
+  #tut .bar { height:4px; background:rgba(233,228,212,.12); border-radius:2px; margin-top:9px; overflow:hidden; }
+  #tut .bar i { display:block; height:100%; width:0; background:var(--toxic); transition:width .2s; }
+  #tut .sk { font-size:11px; opacity:.45; margin-top:6px; }
+  #tut.done { border-color:#ffcf4a; } #tut.done .tx { color:#ffcf4a; }
+  body.touch #tut { top:calc(40px + env(safe-area-inset-top, 0px)); padding:7px 12px; min-width:0; max-width:54vw; }
+  body.touch #tut .tx { font-size:16px; } body.touch #tut .sb { font-size:11px; } body.touch #tut .sk { display:none; }
   #radio { position:absolute; left:16px; top:78px; max-width:min(440px,46vw); padding:9px 14px 10px; border-left:3px solid var(--toxic); opacity:0; transform:translateX(-8px); transition:opacity .5s, transform .5s; }
   #radio.show { opacity:1; transform:none; }
   #radio.h { border-left-color:#7ab8ff; } #radio.h .who { color:#7ab8ff; }
@@ -328,6 +340,7 @@
   <div id="wbar"></div>
   <div id="banner" class="display"></div>
   <div id="toast"></div>
+  <div id="tut" class="panel"><div class="st" id="tutSt"></div><div class="tx" id="tutTx"></div><div class="sb" id="tutSb"></div><div class="bar"><i id="tutBar"></i></div><div class="sk" id="tutSk"></div></div>
   <div id="radio" class="panel"><div class="who" id="radioWho">📻 무전 · 윤 중사</div><div class="msg" id="radioMsg"></div></div>
   <div id="tc">
     <div id="joyHint">이동</div><div id="joyBase"><i id="joyKnob"></i></div>
@@ -413,6 +426,7 @@
         <label>언어 · Language</label>
         <div class="set-presets" id="langSel"><button type="button" data-l="en">English</button><button type="button" data-l="ko">한국어</button></div>
         <p class="set-info" style="opacity:.55;margin-top:-4px">언어를 바꾸면 메인 화면으로 돌아갑니다</p>
+        <div class="set-presets"><button type="button" id="tutReset">🎓 튜토리얼 다시 보기</button></div>
         <button class="btn display sm" id="setClose">확인</button>
       </div>
       <div class="set-test">
@@ -486,6 +500,34 @@ let LANG = 'en'; try { const l = localStorage.getItem('deadnight_lang'); if (l =
 try { const q = new URLSearchParams(location.search).get('lang'); if (q === 'ko' || q === 'en') LANG = q; } catch(e){}
 const EN = LANG === 'en';
 const I18N = {
+  '시점':"View",
+  '오른쪽 화면을 드래그해서 주변을 둘러보세요':"Drag on the right side to look around",
+  '마우스를 움직여 주변을 둘러보세요':"Move the mouse to look around",
+  '조준선은 항상 화면 가운데에 있어요':"The crosshair always stays in the center",
+  '이동':"Move",
+  '왼쪽 화면을 드래그해서 걸어 보세요':"Drag on the left side to walk",
+  'W A S D 로 걸어 보세요':"Walk with W A S D",
+  '좀비는 멈추지 않아요. 계속 움직이는 게 살아남는 법이에요':"Zombies never stop. Keep moving to stay alive",
+  '사격':"Shoot",
+  '좀비를 조준하고 발사 버튼을 누르세요':"Aim at the zombie and tap FIRE",
+  '좀비를 조준하고 클릭해서 쏘세요':"Aim at the zombie and click to shoot",
+  '머리를 맞히면 데미지가 2배예요':"Headshots deal 2× damage",
+  '무기':"Weapons",
+  '아래 무기 칸을 눌러 무기를 바꿔 보세요':"Tap a weapon at the bottom to switch",
+  '1 · 2 · 3 키나 마우스 휠로 무기를 바꿔 보세요':"Switch weapons with 1 · 2 · 3 or the mouse wheel",
+  '칼은 근접, 권총은 탄약 무한, 돌격소총은 강하지만 탄약이 한정돼요':"Knife is melee, the pistol has infinite ammo, the rifle is strong but ammo is limited",
+  '재장전':"Reload",
+  '장전 버튼을 눌러 보세요':"Tap RELOAD",
+  'R 키를 눌러 재장전해 보세요':"Press R to reload",
+  '탄약은 좀비가 가끔 떨어뜨려요. 체력과 스피드업 아이템도 있어요':"Zombies sometimes drop ammo, as well as health and speed-up items",
+  '목표':"Goal",
+  '초록 신호탄이 있는 출구까지 가세요':"Reach the exit marked by the green flare",
+  '화면 위 나침반의 초록 점이 출구 방향이에요':"The green dot on the compass at the top points to the exit",
+  '튜토리얼':"TUTORIAL",
+  'Enter 키로 건너뛰기':"Press Enter to skip",
+  '튜토리얼 완료!':"Tutorial complete!",
+  '이제 살아서 탈출하세요':"Now get out alive",
+  '다음 게임을 시작하면 튜토리얼이 나옵니다':"The tutorial will play the next time you start a game",
   '3D 엔진을 불러오지 못했습니다. 네트워크 연결을 확인하고 새로고침해 주세요.':"Couldn't load the 3D engine. Check your connection and refresh the page.",
   '칼':"Knife",
   '권총':"Pistol",
@@ -749,6 +791,7 @@ const I18N = {
   '탈출 지점 ':"EXIT "
 };
 const I18N_HTML = {
+  "🎓 튜토리얼 다시 보기":"🎓 Show tutorial again",
   "1 · 2 · 3 / 휠":"1 · 2 · 3 / Wheel",
   "10초":"10s",
   "— 무한 모드에서 계속":"— continued in Endless Mode",
@@ -2247,6 +2290,7 @@ function equip(i){
   showWeapon(i); sfx.swap();
 }
 function reload(){
+  TUT.r = true;
   const w = WEAPONS[P.w];
   if (w.melee || P.reloading > 0 || P.switchT > 0 || w.cur === w.mag || w.res <= 0) return;
   P.reloading = w.reload; sfx.reload(w.reload);
@@ -2368,7 +2412,8 @@ function reset(){
   Object.assign(P, { x:0, z:0, yaw:0, pitch:0, hp:100, w:2, reloading:0, fireCd:0, recoil:0, bob:0, shake:0, switchT:0, swing:0, ads:0, swx:0, swy:0, gap:7, stepN:0, speedT:0, spf:0 });
   for (const w of WEAPONS) if (!w.melee){ w.cur = w.mag; w.res = w.res0; }
   showWeapon(P.w); aiming = false; fresh = false;
-  G.seen = {}; G.pvx = G.pvz = 0; G.lpx = undefined;
+  G.seen = {}; G.pvx = G.pvz = 0; G.lpx = undefined; G.tut = false; G.tutAsked = false;
+  if (typeof TUT !== 'undefined'){ TUT.on = false; TUT.done = 0; tutEl.classList.remove('show'); }
   Object.assign(G, { stage:0, score:0, kills:0, spawnT:3, stageTime:0, totalTime:0, time:0, groanT:3 });
   for (const b of bullets){ b.life = 0; b.m.visible = false; }
   bossFxClear();
@@ -2383,7 +2428,7 @@ function tryLock(){
   setTimeout(() => {
     if (document.pointerLockElement !== canvas && G.state === 'playing' && !lockMode){
       fallback = true;
-      toast(tr('마우스로 시점을 돌립니다 · 화면 끝에 닿으면 계속 회전합니다'), 6);
+      if (!(TUT.on || (!tutSeen && G.stage <= 1))) toast(tr('마우스로 시점을 돌립니다 · 화면 끝에 닿으면 계속 회전합니다'), 6);
     }
   }, 500);
 }
@@ -2393,7 +2438,7 @@ function start(mode, again){ if (!Z.ready) return; initAudio(); if (touchMode) g
   reset();
   if (G.mode === 'story'){ clearCp(); G.state = 'cutscene'; startStage(1, true); if (!again) openingCut(); else stageCut(1); return; }
   startStage(1); play(); hint(); }
-function hint(){ if (touchMode) toast(tr('왼쪽 드래그 이동 · 오른쪽 드래그 시점 · 버튼으로 발사'), 5); }
+function hint(){ if (touchMode && tutSeen) toast(tr('왼쪽 드래그 이동 · 오른쪽 드래그 시점 · 버튼으로 발사'), 5); }
 function toMenu(){
   G.state = 'menu'; firing = false; aiming = false;
   if (document.pointerLockElement === canvas) document.exitPointerLock();
@@ -2691,6 +2736,75 @@ function closeArch(){ archOpen = false; show('menu'); }
 $('archBtn').addEventListener('click', openArch);
 $('archClose').addEventListener('click', closeArch);
 
+/* ---------- 튜토리얼 (처음 한 번) ---------- */
+let tutSeen = false; try { tutSeen = localStorage.getItem('deadnight_tut') === '1'; } catch(e){}
+var TUT = { on:false, i:0, v:0, t:0, wait:0, z:null, yaw:0, px:0, pz:0, w0:0, r:false, done:0 };
+var tutEl = $('tut');
+function tutSteps(){ return [
+  { st:tr('시점'), tx:touchMode ? tr('오른쪽 화면을 드래그해서 주변을 둘러보세요') : tr('마우스를 움직여 주변을 둘러보세요'), sb:tr('조준선은 항상 화면 가운데에 있어요'), need:1.6 },
+  { st:tr('이동'), tx:touchMode ? tr('왼쪽 화면을 드래그해서 걸어 보세요') : tr('W A S D 로 걸어 보세요'), sb:tr('좀비는 멈추지 않아요. 계속 움직이는 게 살아남는 법이에요'), need:4 },
+  { st:tr('사격'), tx:touchMode ? tr('좀비를 조준하고 발사 버튼을 누르세요') : tr('좀비를 조준하고 클릭해서 쏘세요'), sb:tr('머리를 맞히면 데미지가 2배예요'), need:1, spawn:true },
+  { st:tr('무기'), tx:touchMode ? tr('아래 무기 칸을 눌러 무기를 바꿔 보세요') : tr('1 · 2 · 3 키나 마우스 휠로 무기를 바꿔 보세요'), sb:tr('칼은 근접, 권총은 탄약 무한, 돌격소총은 강하지만 탄약이 한정돼요'), need:1 },
+  { st:tr('재장전'), tx:touchMode ? tr('장전 버튼을 눌러 보세요') : tr('R 키를 눌러 재장전해 보세요'), sb:tr('탄약은 좀비가 가끔 떨어뜨려요. 체력과 스피드업 아이템도 있어요'), need:1 },
+  { st:tr('목표'), tx:tr('초록 신호탄이 있는 출구까지 가세요'), sb:tr('화면 위 나침반의 초록 점이 출구 방향이에요'), need:4, timed:true }
+]; }
+function tutStart(){
+  TUT.on = true; TUT.i = -1; TUT.done = 0; G.tut = true;
+  toastT = 0; hud.toast.classList.remove('show'); bannerT = 0; hud.banner.classList.remove('show');
+  tutNext();
+}
+function tutShow(){
+  const S = tutSteps(), s = S[TUT.i];
+  setT($('tutSt'), tr('튜토리얼') + ' ' + (TUT.i + 1) + ' / ' + S.length + ' · ' + s.st); setT($('tutTx'), s.tx); setT($('tutSb'), s.sb);
+  setT($('tutSk'), touchMode ? '' : tr('Enter 키로 건너뛰기'));
+  tutEl.classList.remove('done'); tutEl.classList.add('show');
+}
+function tutNext(){
+  const S = tutSteps(); TUT.i++; TUT.v = 0; TUT.t = 0; TUT.r = false;
+  TUT.yaw = P.yaw; TUT.px = P.x; TUT.pz = P.z; TUT.w0 = P.w;
+  if (TUT.i >= S.length){ tutEnd(true); return; }
+  if (S[TUT.i].spawn) tutZombie();
+  tutShow(); if (TUT.i > 0) sfx.pickup();
+}
+function tutZombie(){
+  // 플레이어 앞, 벽에 가리지 않는 곳에 느린 좀비 한 마리
+  let best = null;
+  for (let z=0; z<L.n; z++) for (let x=0; x<L.n; x++){
+    if (L.grid[z*L.n+x]) continue; const cx = (x+0.5)*CS, cz = (z+0.5)*CS, d = Math.hypot(cx - P.x, cz - P.z);
+    if (d < 4.5 || d > 22 || !los(P.x, P.z, cx, cz)) continue;
+    const sc = Math.abs(d - 10)*0.5 - 4*((cx - P.x)*-Math.sin(P.yaw) + (cz - P.z)*-Math.cos(P.yaw))/d;
+    if (!best || sc < best.sc) best = { x:cx, z:cz, sc }; }
+  if (!best){ const c = pickCell(2, 4); if (c) best = c; }
+  if (!best) return;
+  const e = makeEnemy('walker', best.x, best.z, 1); e.tutZ = true; e.speed = 1.4; e.hp = Math.min(e.hp, 90); TUT.z = e;
+}
+function tutEnd(finished){
+  TUT.on = false; G.tut = false; tutSeen = true; try { localStorage.setItem('deadnight_tut', '1'); } catch(e){}
+  if (finished){ setT($('tutSt'), ''); setT($('tutTx'), tr('튜토리얼 완료!')); setT($('tutSb'), tr('이제 살아서 탈출하세요')); setT($('tutSk'), ''); $('tutBar').style.width = '100%';
+    tutEl.classList.add('show', 'done'); TUT.done = 3.2; sfx.wave(); }
+  else tutEl.classList.remove('show');
+  G.spawnT = Math.max(G.spawnT, 4);
+}
+function tutUpdate(dt){
+  if (TUT.done > 0){ TUT.done -= dt; if (TUT.done <= 0) tutEl.classList.remove('show'); }
+  if (!TUT.on){
+    if (!tutSeen && G.stage === 1 && G.stageTime > 3.4 && !G.tutAsked){ G.tutAsked = true; tutStart(); }
+    return; }
+  const S = tutSteps(), s = S[TUT.i]; if (!s) return;
+  G.spawnT = 999;
+  if (TUT.wait > 0){ TUT.wait -= dt; if (TUT.wait <= 0) tutNext(); return; }
+  switch (TUT.i){
+    case 0: { let d = P.yaw - TUT.yaw; TUT.v += Math.abs(d); TUT.yaw = P.yaw; break; }
+    case 1: TUT.v += Math.hypot(P.x - TUT.px, P.z - TUT.pz); TUT.px = P.x; TUT.pz = P.z; break;
+    case 2: TUT.v = (!TUT.z || TUT.z.dead) ? 1 : 0; break;
+    case 3: TUT.v = P.w !== TUT.w0 ? 1 : 0; break;
+    case 4: TUT.v = TUT.r ? 1 : 0; break;
+    case 5: TUT.v += dt; break;
+  }
+  $('tutBar').style.width = Math.min(100, TUT.v/s.need*100).toFixed(0) + '%';
+  if (TUT.v >= s.need){ TUT.wait = s.timed ? 0.01 : 0.55; tutEl.classList.add('done'); }
+}
+
 /* ---------- 체크포인트 (스토리 5단계마다) ---------- */
 const cpKey = () => 'deadnight_cp' + (diff === 'normal' ? '' : '_' + diff);
 function getCp(){ try { const v = JSON.parse(localStorage.getItem(cpKey()) || 'null'); return v && v.s >= 2 ? v : null; } catch(e){ return null; } }
@@ -2834,6 +2948,7 @@ document.addEventListener('pointerlockerror', () => { if (ST.open) ST.lockFail =
 sensR.addEventListener('input', () => setSens(parseFloat(sensR.value)));
 for (const b of document.querySelectorAll('.set-presets button')) b.addEventListener('click', () => setSens(parseFloat(b.dataset.v)));
 $('setClose').addEventListener('click', closeSettings);
+$('tutReset').addEventListener('click', () => { tutSeen = false; try { localStorage.removeItem('deadnight_tut'); } catch(e){} toast(tr('다음 게임을 시작하면 튜토리얼이 나옵니다'), 3); });
 for (const b of document.querySelectorAll('#langSel button')){
   b.classList.toggle('on', b.dataset.l === LANG);
   b.addEventListener('click', () => { if (b.dataset.l === LANG) return; try { localStorage.setItem('deadnight_lang', b.dataset.l); } catch(e){} location.reload(); }); }
@@ -2860,6 +2975,7 @@ document.addEventListener('keydown', e => {
   if (ST.open){ if (e.code === 'Escape' && !ST.lock) closeSettings(); return; }
   if (achOpen){ if (e.code === 'Escape') closeAch(); return; }
   if (archOpen){ if (e.code === 'Escape') closeArch(); return; }
+  if (TUT.on && G.state === 'playing' && e.code === 'Enter'){ tutEnd(false); return; }
   if (G.state === 'doc'){ if (['Enter','Space','KeyE','Escape'].includes(e.code)){ e.preventDefault && e.preventDefault(); closeDoc(); } return; }
   keys[e.code] = true;
   if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
@@ -3006,7 +3122,7 @@ function update(dt){
   P.gap += (gapT - P.gap) * Math.min(1, dt*14); hud.cross.style.setProperty('--g', P.gap.toFixed(1) + 'px');
 
   // 스테이지 진행
-  G.stageTime += dt; G.totalTime += dt; updateField();
+  G.stageTime += dt; G.totalTime += dt; updateField(); tutUpdate(dt);
   if (G.mode === 'story' && STORY[G.stage - 1]){ const st = STORY[G.stage - 1];
     if (!G.midDone){ let f = false;
       if (G.boss) f = G.boss.bs.phase >= 2;
@@ -3046,6 +3162,7 @@ function update(dt){
     const dx = P.x - g.position.x, dz = P.z - g.position.z, d = Math.hypot(dx, dz) || 0.001;
     if (d < nearest) nearest = d;
     if (e.boss){ if (updateBoss(e, dt, dx, dz, d)) return; continue; }
+    if (G.tut && !e.tutZ){ if (e.model) animModelEnemy(e, dt, false, 0, false); continue; }
     const reach = 1.0 + 0.55*e.def.scale;
     const ecx = Math.floor(g.position.x/CS), ecz = Math.floor(g.position.z/CS);
     let tx = P.x, tz = P.z;
@@ -3150,7 +3267,7 @@ function update(dt){
   if (bannerT > 0){ bannerT -= dt; if (bannerT <= 0) hud.banner.classList.remove('show'); }
   if (toastT > 0){ toastT -= dt; if (toastT <= 0) hud.toast.classList.remove('show'); }
   if (radioT > 0){ radioT -= dt; if (radioT <= 0){ radioT = 0; radioEl.classList.remove('show'); } }
-  if (rq.length && radioT <= 0){ rqT -= dt; if (rqT <= 0){ radioLine(rq.shift()); rqT = 0.45; } }
+  if (rq.length && radioT <= 0 && !G.tut){ rqT -= dt; if (rqT <= 0){ radioLine(rq.shift()); rqT = 0.45; } }
   vig = Math.max(0, vig - dt*1.6); hud.vig.style.opacity = vig.toFixed(2);
   hud.low.style.opacity = P.hp < 35 ? (0.35 + 0.3*Math.sin(G.time*5)) * (1 - P.hp/35) + 0.25 : 0;
   if (!touchMode){ hud.cross.style.left = ((aim.x+1)*50) + '%'; hud.cross.style.top = ((1-aim.y)*50) + '%'; }
