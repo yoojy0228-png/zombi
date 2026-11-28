@@ -1,0 +1,9 @@
+{
+  "name": "dead-haerim-server",
+  "version": "1.0.0",
+  "description": "Dead Haerim co-op relay server (no dependencies)",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" },
+  "license": "UNLICENSED"
+}
