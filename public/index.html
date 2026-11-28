@@ -102,7 +102,7 @@
   #buff .row b { font-weight:600; }
   #buffbar { height:4px; margin-top:6px; background:rgba(255,255,255,.08); border-radius:2px; overflow:hidden; }
   #buffbar i { display:block; height:100%; width:100%; background:linear-gradient(90deg,#2fb8ff,#8be9ff); box-shadow:0 0 8px rgba(77,225,255,.8); }
-  #toast { position:absolute; left:50%; bottom:110px; transform:translateX(-50%); font-size:13px;
+  #toast { position:absolute; left:50%; bottom:142px; transform:translateX(-50%); font-size:13px;
     background:rgba(8,12,16,.7); padding:8px 14px; border-radius:4px; opacity:0; transition:opacity .4s; white-space:nowrap; max-width:92vw; overflow:hidden; text-overflow:ellipsis; }
   #toast.show { opacity:1; }
   #cine { position:fixed; inset:0; z-index:40; display:none; cursor:pointer; -webkit-user-select:none; user-select:none; }
@@ -143,12 +143,13 @@
   #tut.done { border-color:#ffcf4a; } #tut.done .tx { color:#ffcf4a; }
   body.touch #tut { top:calc(40px + env(safe-area-inset-top, 0px)); padding:7px 12px; min-width:0; max-width:54vw; }
   body.touch #tut .tx { font-size:16px; } body.touch #tut .sb { font-size:11px; } body.touch #tut .sk { display:none; }
-  #radio { position:absolute; left:16px; top:78px; max-width:min(440px,46vw); padding:9px 14px 10px; border-left:3px solid var(--toxic); opacity:0; transform:translateX(-8px); transition:opacity .5s, transform .5s; }
-  #radio.show { opacity:1; transform:none; }
+  #radio { position:absolute; left:50%; bottom:60px; width:max-content; max-width:min(1000px, calc(100vw - 560px)); min-width:min(420px, calc(100vw - 560px));
+    display:flex; align-items:baseline; gap:14px; padding:10px 20px 11px; border-left:3px solid var(--toxic); opacity:0; transform:translate(-50%,10px); transition:opacity .5s, transform .5s; }
+  #radio.show { opacity:1; transform:translate(-50%,0); }
   #radio.h { border-left-color:#7ab8ff; } #radio.h .who { color:#7ab8ff; }
   #radio.s { border-left-color:#888; } #radio.s .who { color:#999; } #radio.s .msg { opacity:.7; letter-spacing:.06em; }
-  #radio .who { font-size:10px; letter-spacing:.22em; color:var(--toxic); margin-bottom:3px; }
-  #radio .msg { font-size:14px; line-height:1.5; }
+  #radio .who { flex-shrink:0; white-space:nowrap; font-size:11px; letter-spacing:.18em; color:var(--toxic); }
+  #radio .msg { font-size:15px; line-height:1.5; }
   .story { text-align:left; font-size:15px; line-height:1.85; opacity:.9; margin-top:18px; max-height:52vh; overflow-y:auto; }
   .story p { margin:0 0 10px; }
   .story .rad { color:var(--toxic); }
@@ -294,9 +295,9 @@
   body.touch #wbar { bottom:calc(10px + env(safe-area-inset-bottom, 0px)); flex-wrap:nowrap; width:auto; gap:6px; justify-content:center; }
   body.touch #wbar button { padding:10px 14px; font-size:13px; opacity:.78; }
   body.touch #wbar button i { display:none; }
-  body.touch #toast { bottom:70px; font-size:12px; }
-  body.touch #radio { left:50%; top:calc(34px + env(safe-area-inset-top, 0px)); transform:translateX(-50%); max-width:52vw; padding:5px 10px; }
-  body.touch #radio .msg { font-size:12px; line-height:1.4; }
+  body.touch #toast { bottom:calc(124px + env(safe-area-inset-bottom, 0px)); font-size:12px; }
+  body.touch #radio { bottom:calc(58px + env(safe-area-inset-bottom, 0px)); max-width:calc(100vw - 400px); min-width:0; gap:1px; padding:5px 12px; flex-direction:column; align-items:flex-start; }
+  body.touch #radio .who { font-size:9px; } body.touch #radio .msg { font-size:12px; line-height:1.35; }
   body.touch #banner { top:22%; font-size:clamp(28px,8vh,52px); }
   #rotate { display:none; position:fixed; inset:0; z-index:50; background:#05080c; color:var(--bone); align-items:center; justify-content:center; text-align:center; padding:30px; font-size:20px; line-height:1.7; }
   #rotate b { display:block; font-size:54px; margin-bottom:10px; }
