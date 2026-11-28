@@ -1656,11 +1656,11 @@ function updateBullets(dt){
   return false;
 }
 /* ---------- 새 좀비: 폭발 / 방패 / 산성 ---------- */
-const shieldM = new THREE.MeshStandardMaterial({ color:0x3a4250, roughness:0.45, metalness:0.75 });
-const shieldWinM = new THREE.MeshStandardMaterial({ color:0x1a2a30, roughness:0.1, metalness:0.2, transparent:true, opacity:0.6 });
+const shieldM = new THREE.MeshStandardMaterial({ color:0x2c323a, roughness:0.85, metalness:0.25 });
+const shieldWinM = new THREE.MeshStandardMaterial({ color:0x10181c, roughness:0.6, metalness:0.1, transparent:true, opacity:0.75 });
 function armBomber(e){
-  e.sacM = new THREE.MeshBasicMaterial({ color:0xff6a18 });
-  for (const q of [[0,1.05,0.26,0.36],[0.2,1.3,0.18,0.2],[-0.18,0.85,0.2,0.22]]){
+  e.sacM = new THREE.MeshStandardMaterial({ color:0x6a3410, emissive:0xff5a10, emissiveIntensity:0.45, roughness:0.35, metalness:0 });
+  for (const q of [[0,1.02,0.22,0.27],[0.17,1.28,0.15,0.15],[-0.16,0.84,0.17,0.17]]){
     const m = new THREE.Mesh(SPH, e.sacM); m.scale.setScalar(q[3]); m.position.set(q[0], q[1], q[2]); e.g.add(m); }
   e.fuse = 0;
 }
@@ -3081,10 +3081,10 @@ function update(dt){
     if (NEWS[e.type] && !G.seen[e.type] && d < 22){ G.seen[e.type] = 1; toast(NEWS[e.type], 5.5); }
     if (e.type === 'bomber'){
       if (e.fuse > 0){ hold = true; e.fuse -= dt; const bl = Math.floor(e.fuse*16) % 2;
-        e.sacM.color.setHex(bl ? 0xffffff : 0xff3010); if (bl !== e.bl){ e.bl = bl; if (bl) sfx.beep(Math.max(0.3, 1 - d/25)); }
+        e.sacM.emissive.setHex(bl ? 0xffffff : 0xff3010); e.sacM.emissiveIntensity = bl ? 1.1 : 0.7; if (bl !== e.bl){ e.bl = bl; if (bl) sfx.beep(Math.max(0.3, 1 - d/25)); }
         if (e.fuse <= 0){ boom(e); if (G.state !== 'playing') return; continue; } }
       else if (d < 2.3 && e.stagger <= 0){ e.fuse = 0.75; }
-      else e.sacM.color.setHex(0xff6a18 + (Math.sin(G.time*5 + i) > 0.6 ? 0x002000 : 0));
+      else e.sacM.emissiveIntensity = 0.35 + 0.2*Math.max(0, Math.sin(G.time*4 + i));
     }
     if (e.type === 'spitter'){
       e.losT = (e.losT || 0) - dt; if (e.losT <= 0){ e.losT = 0.25; e.see = d < 20 && los(g.position.x, g.position.z, P.x, P.z); }
